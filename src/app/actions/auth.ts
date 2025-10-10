@@ -192,3 +192,36 @@ export async function resendConfirmationEmail(email: string) {
     message: "Email de confirmation renvoyé avec succès.",
   };
 }
+
+//pour l'envoi de l'email de réinitialisation du mot de passe
+export async function sendResetPasswordEmail(email: string) {
+  if (!email) {
+    return { success: false, message: "Email invalide" };
+  }
+
+  // 🧩 Création du client Supabase (serveur)
+  const supabase = await createClient();
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    });
+
+    if (error) {
+      console.error("Supabase error:", error);
+      return { success: false, message: `Erreur: ${error.message}` };
+    }
+
+    return {
+      success: true,
+      message:
+        "Un email de réinitialisation a été envoyé. Vérifiez votre boîte mail (et vos spams).",
+    };
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    return {
+      success: false,
+      message: "Une erreur est survenue. Veuillez réessayer plus tard.",
+    };
+  }
+}
