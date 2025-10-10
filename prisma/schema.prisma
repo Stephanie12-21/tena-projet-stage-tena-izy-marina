@@ -25,3 +25,8 @@ enum Role {
   ADMIN
   DRIVER
 }
+
+model Parent {
+  id  String @id @default(uuid())
+  nom String
+}

@@ -74,7 +74,7 @@ export default function SignInPage() {
 
       if (result.status === "success") {
         alert("Compte créé avec succès !");
-        router.push("/dashboard");
+        router.push("/login");
       } else {
         alert("Erreur : " + result.status);
         setErrors({ global: result.status });

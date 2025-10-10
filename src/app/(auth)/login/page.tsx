@@ -23,8 +23,13 @@ export default function SignInPage() {
     setIsLoading(false);
   };
 
+  //pour aller à la page de connexion
   const handleGoRegister = () => router.push("/register");
+
+  //pour le bouton retour
   const handleGoBack = () => router.back();
+
+  //pour les changements dans les champs du formulaire
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
