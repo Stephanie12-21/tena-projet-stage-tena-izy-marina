@@ -137,7 +137,7 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-  
+
   const handleGoBack = () => router.back();
 
   return (
@@ -264,7 +264,7 @@ const LoginPage = () => {
               <p className="text-sm text-center text-gray-600">
                 Vous n&apos;avez pas encore de compte ?{" "}
                 <Link
-                  href="/register"
+                  href="/register/asParent"
                   className="hover:underline font-medium transition-colors"
                 >
                   Créer un compte
@@ -281,9 +281,6 @@ const LoginPage = () => {
             closeOnClick
             pauseOnHover
             toastStyle={{
-              backgroundColor: "white",
-              color: "#C3875D",
-              border: "1px solid #C3875D20",
               width: "500px",
             }}
           />
