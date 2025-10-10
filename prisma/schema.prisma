@@ -1,14 +1,17 @@
+// Générateur Prisma Client
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
+// Source de données PostgreSQL
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+// Modèle User
 model User {
   id        String   @id @default(uuid())
   nom       String
@@ -18,15 +21,28 @@ model User {
   role      Role     @default(ADMIN)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relation avec les enfants
+  children Children[] // un parent peut avoir plusieurs enfants
 }
 
+// Enum des rôles
 enum Role {
   PARENT
   ADMIN
   DRIVER
 }
 
-model Parent {
-  id  String @id @default(uuid())
-  nom String
+// Modèle Children
+model Children {
+  id       String @id @default(uuid())
+  nom      String
+  prenom   String
+  adresse  String
+  homeLat  Float
+  homeLong Float
+
+  // Relation avec le parent, suppression en cascade
+  parent   User   @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parentId String
 }
