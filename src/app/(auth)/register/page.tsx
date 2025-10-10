@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { signUp } from "@/app/actions/auth";
+import Link from "next/link";
 
 // ✅ Schéma de validation Zod
 const signupSchema = z
@@ -99,7 +100,7 @@ export default function SignInPage() {
       {/* --- FORMULAIRE --- */}
       <div className="flex w-full md:w-1/2 flex-col p-4 relative z-10">
         {/* --- Haut : Bouton retour + Logo --- */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex justify-between items-center mb-2">
           <Button
             variant="outline"
             className="group hover:scale-105 transition-all duration-300"
@@ -281,6 +282,15 @@ export default function SignInPage() {
               >
                 {isLoading ? "Création en cours..." : "Créer un compte"}
               </Button>
+              <p className="text-sm text-center text-gray-600">
+                Vous avez déjà un compte ?{" "}
+                <Link
+                  href="/login"
+                  className="hover:underline font-medium transition-colors"
+                >
+                  Se connecter
+                </Link>
+              </p>
             </div>
           </form>
         </div>

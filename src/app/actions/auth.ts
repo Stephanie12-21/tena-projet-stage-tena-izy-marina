@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
 
+//pour la création de compte
 export async function signUp(formData: FormData) {
   console.log("=== Début de la fonction signUp ===");
 
@@ -93,4 +94,101 @@ export async function signUp(formData: FormData) {
       user: null,
     };
   }
+}
+
+//pourla connexion au compte
+export async function signIn(formData: FormData) {
+  const supabase = await createClient();
+
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  // Vérifier si l'utilisateur existe dans ta propre DB
+  const user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    return {
+      status: "error",
+      reason: "user_not_found",
+      user: null,
+      session: null,
+      email: null,
+    };
+  }
+
+  // Tentative de connexion avec Supabase
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  // Gestion fine des erreurs de Supabase
+  if (error) {
+    const msg = (error.message || "").toLowerCase();
+
+    if (msg.includes("email not confirmed") || /confirm/i.test(msg)) {
+      return {
+        status: "error",
+        reason: "email_not_confirmed",
+        user,
+        session: null,
+        email,
+      };
+    }
+
+    return {
+      status: "error",
+      reason: "invalid_credentials",
+      user: null,
+      session: null,
+      email: null,
+    };
+  }
+
+  // Sécurité : si jamais la connexion réussit mais l'email n’est pas confirmé
+  if (!data.user?.email_confirmed_at && !data.user?.confirmed_at) {
+    return {
+      status: "error",
+      reason: "email_not_confirmed",
+      user,
+      session: null,
+      email,
+    };
+  }
+
+  // Récupérer la session si tout est bon
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  revalidatePath("/", "layout");
+
+  return {
+    status: "success",
+    user,
+    session,
+    email,
+  };
+}
+
+//pour le renvoi de l'email de confirmation
+export async function resendConfirmationEmail(email: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+  });
+
+  if (error) {
+    return {
+      status: "error",
+      message: error.message,
+    };
+  }
+
+  return {
+    status: "success",
+    message: "Email de confirmation renvoyé avec succès.",
+  };
 }
