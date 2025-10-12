@@ -38,11 +38,37 @@ model Children {
   id       String @id @default(uuid())
   nom      String
   prenom   String
-  adresse  String
+  adresse  String //adresse de l'enfant 
   homeLat  Float
   homeLong Float
 
-  // Relation avec le parent, suppression en cascade
+  // Relation vers l'école
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  schoolId String
+
+  // Relation obligatoire avec l'image de profil
+  imageprofile   Image  @relation(fields: [imageprofileId], references: [id])
+  imageprofileId String @unique
+
+  // Relation avec le parent (suppression en cascade)
   parent   User   @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   parentId String
+}
+
+model School {
+  id         String @id @default(uuid())
+  nom        String
+  adresse    String
+  schoolLat  Float
+  schoolLong Float
+
+  // Relation inverse
+  children Children[]
+}
+
+// Modèle Image
+model Image {
+  id    String    @id @default(uuid())
+  url   String
+  child Children? @relation
 }

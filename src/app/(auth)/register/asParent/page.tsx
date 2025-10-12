@@ -9,11 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
-import { signUp } from "@/app/actions/auth";
+import { signUpAsParent } from "@/app/actions/auth";
 import ParentForm from "@/components/features/authform/ParentForm";
-import ChildrenForm, {
-  type SignUpFormData,
-} from "@/components/features/authform/ChildForm";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import SchoolForm from "@/components/features/authform/SchoolForm";
+import ChildrenForm from "@/components/features/authform/ChildForm";
+import { SignUpFormData } from "@/lib/types/user-interface";
+import { createChild } from "@/app/actions/children";
+import { uploadToCloudinary } from "@/app/actions/upload";
 
 // ✅ Validation du formulaire complet
 const signupSchema = z
@@ -24,9 +28,16 @@ const signupSchema = z
     phone: z
       .string()
       .regex(/^\+?[0-9\s]{7,15}$/, "Numéro de téléphone invalide"),
+
     prenomEnfant: z.string().min(1, "Le prénom de l'enfant est requis"),
     nomEnfant: z.string().min(1, "Le nom de l'enfant est requis"),
-    adresse: z.string().min(1, "L'adresse est requise"),
+    adresse: z.string().min(1, "L'adresse de l'enfant est requise"),
+
+    schoolName: z.string().min(1, "Le nom de l'école est requis"),
+    schoolAddress: z.string().min(1, "L'adresse de l'école est requise"),
+    schoolLat: z.coerce.number().min(-90).max(90, "Latitude invalide"),
+    schoolLong: z.coerce.number().min(-180).max(180, "Longitude invalide"),
+
     password: z
       .string()
       .min(6, "Le mot de passe doit contenir au moins 6 caractères"),
@@ -44,15 +55,23 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // ✅ FormData typé (compatible avec ChildrenForm)
   const [formData, setFormData] = useState<SignUpFormData>({
+    //pour le parent
     prenom: "",
     nom: "",
     email: "",
     phone: "",
+    //pour l'enfant
     prenomEnfant: "",
     nomEnfant: "",
     adresse: "",
+    photoEnfant: null,
+    //pour l'école de l'enfant
+    schoolName: "",
+    schoolAddress: "",
+    schoolLat: 0,
+    schoolLong: 0,
+    //pour le mot de passe du compte parent
     password: "",
     confirmPassword: "",
   });
@@ -71,43 +90,199 @@ export default function SignInPage() {
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
 
+  // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   console.log("=== handleSubmit déclenché ===");
+  //   setIsLoading(true);
+
+  //   console.log("FormData actuel :", formData);
+
+  //   // ✅ Validation Zod
+  //   const result = signupSchema.safeParse(formData);
+  //   if (!result.success) {
+  //     console.log("Validation échouée :", result.error.issues);
+  //     const fieldErrors: Record<string, string> = {};
+  //     result.error.issues.forEach((err) => {
+  //       if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
+  //     });
+  //     setErrors(fieldErrors);
+  //     setIsLoading(false);
+  //     return;
+  //   }
+
+  //   console.log("Validation réussie !");
+  //   setErrors({});
+
+  //   try {
+  //     // 1️⃣ Création du parent
+  //     console.log("Création du parent...");
+  //     const form = new FormData();
+  //     form.append("nom", formData.nom ?? "");
+  //     form.append("prenom", formData.prenom ?? "");
+  //     form.append("email", formData.email ?? "");
+  //     form.append("phone", formData.phone ?? "");
+  //     form.append("password", formData.password ?? "");
+
+  //     console.log("FormData envoyé à signUp :", Array.from(form.entries()));
+  //     const resParent = await signUpAsParent(form);
+  //     console.log("Réponse signUp :", resParent);
+
+  //     if (resParent.status !== "success" || !resParent.user) {
+  //       console.log("Erreur création parent :", resParent);
+  //       setErrors({
+  //         global: resParent.status || "Erreur lors de la création du parent",
+  //       });
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     const parentId = resParent.user.id;
+  //     console.log("Parent créé avec ID :", parentId);
+
+  //     // 2️⃣ Vérifier que la photo de l'enfant existe
+  //     if (!formData.photoEnfant) {
+  //       alert("Vous devez fournir une photo de l'enfant !");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+
+  //     // 3️⃣ Conversion du fichier photo
+  //     console.log("Conversion du fichier photo...");
+  //     const arrayBuffer = await formData.photoEnfant.arrayBuffer();
+  //     const uint8Array = new Uint8Array(arrayBuffer);
+
+  //     // 4️⃣ Upload de la photo (Server Action)
+  //     console.log("Upload de la photo de l'enfant...");
+  //     const uploadedUrl = await uploadToCloudinary(uint8Array);
+  //     console.log("✅ Photo uploadée :", uploadedUrl);
+
+  //     // 5️⃣ Préparer les données de l'enfant
+  //     const childData = {
+  //       prenomEnfant: formData.prenomEnfant!,
+  //       nomEnfant: formData.nomEnfant!,
+  //       adresse: formData.adresse!,
+  //       homeLat: formData.homeLat ?? 0,
+  //       homeLong: formData.homeLong ?? 0,
+  //       parentId,
+  //       schoolName: formData.schoolName!,
+  //       schoolAddress: formData.schoolAddress!,
+  //       schoolLat: formData.schoolLat!,
+  //       schoolLong: formData.schoolLong!,
+  //       photoUrl: uploadedUrl,
+  //     };
+
+  //     console.log("Données enfant envoyées :", childData);
+
+  //     // 6️⃣ Création de l'enfant côté serveur
+  //     const resChild = await createChild(childData);
+  //     console.log("Réponse createChild :", resChild);
+
+  //     alert("Compte créé avec succès !");
+  //     router.push("/login");
+  //   } catch (err) {
+  //     console.error(" Erreur lors de l'inscription :", err);
+  //     setErrors({ global: "Une erreur inattendue est survenue." });
+  //     alert("Une erreur inattendue est survenue.");
+  //   } finally {
+  //     setIsLoading(false);
+  //     console.log("=== handleSubmit terminé ===");
+  //   }
+  // };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("=== handleSubmit déclenché ===");
     setIsLoading(true);
 
+    console.log("FormData actuel :", formData);
+
+    // ✅ Validation Zod
     const result = signupSchema.safeParse(formData);
     if (!result.success) {
+      console.log("Validation échouée :", result.error.issues);
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((err) => {
         if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
       });
       setErrors(fieldErrors);
+      toast.error("Certains champs sont invalides. Vérifie le formulaire.");
       setIsLoading(false);
       return;
     }
 
+    console.log("Validation réussie !");
     setErrors({});
+
     try {
+      // 1️⃣ Création du parent
+      console.log("Création du parent...");
       const form = new FormData();
-      Object.entries(formData).forEach(([key, value]) =>
-        form.append(key, String(value ?? ""))
-      );
+      form.append("nom", formData.nom ?? "");
+      form.append("prenom", formData.prenom ?? "");
+      form.append("email", formData.email ?? "");
+      form.append("phone", formData.phone ?? "");
+      form.append("password", formData.password ?? "");
 
-      const res = await signUp(form);
+      const resParent = await signUpAsParent(form);
+      console.log("Réponse signUp :", resParent);
 
-      if (res.status === "success") {
-        alert("Compte créé avec succès !");
-        router.push("/login");
-      } else {
-        alert("Erreur : " + res.status);
-        setErrors({ global: res.status });
+      if (resParent.status !== "success" || !resParent.user) {
+        toast.error("Erreur lors de la création du compte parent.");
+        setIsLoading(false);
+        return;
       }
+
+      const parentId = resParent.user.id;
+      toast.success("Compte parent créé avec succès !");
+
+      // 2️⃣ Vérifier la photo
+      if (!formData.photoEnfant) {
+        toast.warning("Vous devez fournir une photo de l'enfant !");
+        setIsLoading(false);
+        return;
+      }
+
+      // 3️⃣ Conversion du fichier photo
+      const arrayBuffer = await formData.photoEnfant.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+
+      // 4️⃣ Upload de la photo
+      toast.info("Upload de la photo de l'enfant en cours...");
+      const uploadedUrl = await uploadToCloudinary(uint8Array);
+      console.log("✅ Photo uploadée :", uploadedUrl);
+      toast.success("Photo de l'enfant uploadée avec succès !");
+
+      // 5️⃣ Préparer les données de l'enfant
+      const childData = {
+        prenomEnfant: formData.prenomEnfant!,
+        nomEnfant: formData.nomEnfant!,
+        adresse: formData.adresse!,
+        homeLat: formData.homeLat ?? 0,
+        homeLong: formData.homeLong ?? 0,
+        parentId,
+        schoolName: formData.schoolName!,
+        schoolAddress: formData.schoolAddress!,
+        schoolLat: formData.schoolLat!,
+        schoolLong: formData.schoolLong!,
+        photoUrl: uploadedUrl,
+      };
+
+      // 6️⃣ Création de l'enfant
+      const resChild = await createChild(childData);
+      console.log("Réponse createChild :", resChild);
+
+      toast.success("Compte complet créé avec succès 🎉");
+
+      // 🕓 Attendre avant redirection (pour laisser le toast visible)
+      setTimeout(() => {
+        router.push("/login");
+      }, 3000); // 2.5 secondes
     } catch (err) {
-      console.error("Erreur lors de l'inscription :", err);
-      alert("Une erreur inattendue est survenue.");
-      setErrors({ global: "Une erreur inattendue est survenue." });
+      console.error("❌ Erreur lors de l'inscription :", err);
+      toast.error("Une erreur inattendue est survenue. Réessaie plus tard.");
     } finally {
       setIsLoading(false);
+      console.log("=== handleSubmit terminé ===");
     }
   };
 
@@ -158,8 +333,19 @@ export default function SignInPage() {
               />
             )}
 
-            {/* Étape 3 : Mot de passe */}
+            {/* Étape 3 : Infos école */}
             {step === 3 && (
+              <SchoolForm
+                formData={formData}
+                errors={errors}
+                handleNext={handleNext}
+                handleBack={handleBack}
+                setFormData={setFormData}
+              />
+            )}
+
+            {/* Étape 4 : Mot de passe */}
+            {step === 4 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold">Mot de passe</h2>
 
@@ -249,6 +435,17 @@ export default function SignInPage() {
           </form>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        toastStyle={{
+          width: "500px",
+        }}
+      />
 
       {/* --- Illustration --- */}
       <div className="hidden md:flex w-1/2 relative overflow-hidden">

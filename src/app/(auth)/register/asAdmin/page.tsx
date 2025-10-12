@@ -10,6 +10,8 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { signUp } from "@/app/actions/auth";
 import Link from "next/link";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // ✅ Schéma de validation Zod
 const signupSchema = z
@@ -74,15 +76,17 @@ export default function SignInPage() {
       const result = await signUp(form);
 
       if (result.status === "success") {
-        alert("Compte créé avec succès !");
-        router.push("/login");
+        toast.success("Compte créé avec succès !");
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
       } else {
         alert("Erreur : " + result.status);
         setErrors({ global: result.status });
       }
     } catch (err) {
       console.error("Erreur lors de l'inscription :", err);
-      alert("Une erreur inattendue est survenue.");
+      toast.error("Une erreur inattendue est survenue.");
       setErrors({ global: "Une erreur inattendue est survenue." });
     } finally {
       setIsLoading(false);
@@ -295,7 +299,17 @@ export default function SignInPage() {
           </form>
         </div>
       </div>
-
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        toastStyle={{
+          width: "500px",
+        }}
+      />
       {/* --- Image à droite --- */}
       <div className="hidden md:flex w-1/2 relative overflow-hidden">
         <Image

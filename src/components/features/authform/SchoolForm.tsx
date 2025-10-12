@@ -4,9 +4,9 @@ import { useState, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import { SignUpFormData } from "@/lib/types/user-interface";
 
+// ✅ Interface pour Geoapify
 interface GeoapifyFeature {
   properties: {
     formatted: string;
@@ -15,7 +15,8 @@ interface GeoapifyFeature {
   };
 }
 
-interface ChildrenFormProps {
+// ✅ Props de composant
+interface SchoolFormProps {
   formData: SignUpFormData;
   errors: Record<string, string>;
   handleNext: () => void;
@@ -23,22 +24,22 @@ interface ChildrenFormProps {
   setFormData: React.Dispatch<React.SetStateAction<SignUpFormData>>;
 }
 
-export default function ChildrenForm({
+export default function SchoolForm({
   formData,
   errors,
   handleNext,
   handleBack,
   setFormData,
-}: ChildrenFormProps) {
+}: SchoolFormProps) {
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const [suggestions, setSuggestions] = useState<
     { formatted: string; lat: number; lon: number }[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const apiKey = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
+  // ✅ Autocomplétion de l’adresse
   const fetchSuggestions = async (query: string) => {
     if (!query || query.length < 3) {
       setSuggestions([]);
@@ -64,7 +65,10 @@ export default function ChildrenForm({
         setSuggestions(list);
       }
     } catch (err) {
-      console.error("Erreur lors de la récupération des suggestions :", err);
+      console.error(
+        "Erreur lors de la récupération des suggestions Geoapify:",
+        err
+      );
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +76,7 @@ export default function ChildrenForm({
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setFormData((prev) => ({ ...prev, adresse: value }));
+    setFormData((prev) => ({ ...prev, schoolAddress: value }));
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(value), 500);
@@ -85,9 +89,9 @@ export default function ChildrenForm({
   }) => {
     setFormData((prev) => ({
       ...prev,
-      adresse: s.formatted,
-      homeLat: s.lat,
-      homeLong: s.lon,
+      schoolAddress: s.formatted,
+      schoolLat: s.lat,
+      schoolLong: s.lon,
     }));
     setSuggestions([]);
   };
@@ -97,97 +101,42 @@ export default function ChildrenForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, photoEnfant: file }));
-
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div className="space-y-4 relative">
-      <h2 className="text-xl font-semibold">Informations de l&apos;enfant</h2>
+      <h2 className="text-xl font-semibold">Informations de l&apos;école</h2>
 
-      {/* Photo */}
+      {/* --- Nom de l'école --- */}
       <div className="space-y-2">
-        <Label htmlFor="photoEnfant">Photo de l&apos;enfant</Label>
-        <div className="flex items-center gap-4">
-          <Input
-            id="photoEnfant"
-            name="photoEnfant"
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            className="flex-1"
-          />
-          {preview && (
-            <Image
-              width={50}
-              height={50}
-              src={preview}
-              alt="Aperçu"
-              className="w-16 h-16 object-cover rounded-lg border shadow-sm"
-            />
-          )}
-        </div>
-        {errors.photoEnfant && (
-          <p className="text-red-500 text-sm">{errors.photoEnfant}</p>
+        <Label htmlFor="schoolName">Nom de l&apos;école</Label>
+        <Input
+          id="schoolName"
+          name="schoolName"
+          type="text"
+          value={formData.schoolName || ""}
+          onChange={handleInputChange}
+          placeholder="Ex: École Saint Exupéry"
+          required
+        />
+        {errors.schoolName && (
+          <p className="text-red-500 text-sm">{errors.schoolName}</p>
         )}
       </div>
 
-      {/* Nom & prénom */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="prenomEnfant">Prénom</Label>
-          <Input
-            id="prenomEnfant"
-            name="prenomEnfant"
-            type="text"
-            value={formData.prenomEnfant || ""}
-            onChange={handleInputChange}
-            placeholder="Prénom de l'enfant"
-            required
-          />
-          {errors.prenomEnfant && (
-            <p className="text-red-500 text-sm">{errors.prenomEnfant}</p>
-          )}
-        </div>
-
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="nomEnfant">Nom</Label>
-          <Input
-            id="nomEnfant"
-            name="nomEnfant"
-            type="text"
-            value={formData.nomEnfant || ""}
-            onChange={handleInputChange}
-            placeholder="Nom de l'enfant"
-            required
-          />
-          {errors.nomEnfant && (
-            <p className="text-red-500 text-sm">{errors.nomEnfant}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Adresse */}
+      {/* --- Adresse de l'école --- */}
       <div className="space-y-2 relative">
-        <Label htmlFor="adresse">Adresse</Label>
+        <Label htmlFor="schoolAddress">Adresse de l&apos;école</Label>
         <Input
-          id="adresse"
-          name="adresse"
+          id="schoolAddress"
+          name="schoolAddress"
           type="text"
-          value={formData.adresse || ""}
+          value={formData.schoolAddress || ""}
           onChange={handleAddressChange}
           placeholder="Commencez à taper une adresse..."
           autoComplete="off"
           required
         />
 
+        {/* Suggestions d'adresses */}
         {suggestions.length > 0 && (
           <ul className="absolute z-20 w-full bg-white border rounded-lg shadow-md mt-1 max-h-48 overflow-y-auto">
             {suggestions.map((s, i) => (
@@ -205,18 +154,20 @@ export default function ChildrenForm({
         {isLoading && (
           <p className="text-gray-400 text-sm mt-1">Chargement...</p>
         )}
-        {errors.adresse && (
-          <p className="text-red-500 text-sm">{errors.adresse}</p>
+        {errors.schoolAddress && (
+          <p className="text-red-500 text-sm">{errors.schoolAddress}</p>
         )}
       </div>
 
-      {formData.homeLat && formData.homeLong && (
+      {/* --- Coordonnées (lat/long) --- */}
+      {formData.schoolLat && formData.schoolLong && (
         <div className="text-sm text-gray-700">
-          <p>Latitude : {formData.homeLat}</p>
-          <p>Longitude : {formData.homeLong}</p>
+          <p>Latitude : {formData.schoolLat}</p>
+          <p>Longitude : {formData.schoolLong}</p>
         </div>
       )}
 
+      {/* --- Boutons navigation --- */}
       <div className="flex justify-between pt-4">
         <Button type="button" onClick={handleBack} variant="outline">
           Retour

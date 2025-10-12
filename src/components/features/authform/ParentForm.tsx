@@ -22,38 +22,34 @@ export default function ParentForm({
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Informations du parent</h2>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="prenom">Prénom</Label>
-          <Input
-            id="prenom"
-            name="prenom"
-            type="text"
-            value={formData.prenom || ""}
-            onChange={handleInputChange}
-            placeholder="Votre prénom"
-            required
-          />
-          {errors.prenom && (
-            <p className="text-red-500 text-sm">{errors.prenom}</p>
-          )}
-        </div>
-
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="nom">Nom</Label>
-          <Input
-            id="nom"
-            name="nom"
-            type="text"
-            value={formData.nom || ""}
-            onChange={handleInputChange}
-            placeholder="Votre nom"
-            required
-          />
-          {errors.nom && <p className="text-red-500 text-sm">{errors.nom}</p>}
-        </div>
+      <div className="flex-1 space-y-2">
+        <Label htmlFor="prenom">Prénom</Label>
+        <Input
+          id="prenom"
+          name="prenom"
+          type="text"
+          value={formData.prenom || ""}
+          onChange={handleInputChange}
+          placeholder="Votre prénom"
+          required
+        />
+        {errors.prenom && (
+          <p className="text-red-500 text-sm">{errors.prenom}</p>
+        )}
       </div>
-
+      <div className="flex-1 space-y-2">
+        <Label htmlFor="nom">Nom</Label>
+        <Input
+          id="nom"
+          name="nom"
+          type="text"
+          value={formData.nom || ""}
+          onChange={handleInputChange}
+          placeholder="Votre nom"
+          required
+        />
+        {errors.nom && <p className="text-red-500 text-sm">{errors.nom}</p>}
+      </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
