@@ -90,105 +90,6 @@ export default function SignInPage() {
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
 
-  // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   console.log("=== handleSubmit déclenché ===");
-  //   setIsLoading(true);
-
-  //   console.log("FormData actuel :", formData);
-
-  //   // ✅ Validation Zod
-  //   const result = signupSchema.safeParse(formData);
-  //   if (!result.success) {
-  //     console.log("Validation échouée :", result.error.issues);
-  //     const fieldErrors: Record<string, string> = {};
-  //     result.error.issues.forEach((err) => {
-  //       if (err.path[0]) fieldErrors[err.path[0] as string] = err.message;
-  //     });
-  //     setErrors(fieldErrors);
-  //     setIsLoading(false);
-  //     return;
-  //   }
-
-  //   console.log("Validation réussie !");
-  //   setErrors({});
-
-  //   try {
-  //     // 1️⃣ Création du parent
-  //     console.log("Création du parent...");
-  //     const form = new FormData();
-  //     form.append("nom", formData.nom ?? "");
-  //     form.append("prenom", formData.prenom ?? "");
-  //     form.append("email", formData.email ?? "");
-  //     form.append("phone", formData.phone ?? "");
-  //     form.append("password", formData.password ?? "");
-
-  //     console.log("FormData envoyé à signUp :", Array.from(form.entries()));
-  //     const resParent = await signUpAsParent(form);
-  //     console.log("Réponse signUp :", resParent);
-
-  //     if (resParent.status !== "success" || !resParent.user) {
-  //       console.log("Erreur création parent :", resParent);
-  //       setErrors({
-  //         global: resParent.status || "Erreur lors de la création du parent",
-  //       });
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     const parentId = resParent.user.id;
-  //     console.log("Parent créé avec ID :", parentId);
-
-  //     // 2️⃣ Vérifier que la photo de l'enfant existe
-  //     if (!formData.photoEnfant) {
-  //       alert("Vous devez fournir une photo de l'enfant !");
-  //       setIsLoading(false);
-  //       return;
-  //     }
-
-  //     // 3️⃣ Conversion du fichier photo
-  //     console.log("Conversion du fichier photo...");
-  //     const arrayBuffer = await formData.photoEnfant.arrayBuffer();
-  //     const uint8Array = new Uint8Array(arrayBuffer);
-
-  //     // 4️⃣ Upload de la photo (Server Action)
-  //     console.log("Upload de la photo de l'enfant...");
-  //     const uploadedUrl = await uploadToCloudinary(uint8Array);
-  //     console.log("✅ Photo uploadée :", uploadedUrl);
-
-  //     // 5️⃣ Préparer les données de l'enfant
-  //     const childData = {
-  //       prenomEnfant: formData.prenomEnfant!,
-  //       nomEnfant: formData.nomEnfant!,
-  //       adresse: formData.adresse!,
-  //       homeLat: formData.homeLat ?? 0,
-  //       homeLong: formData.homeLong ?? 0,
-  //       parentId,
-  //       schoolName: formData.schoolName!,
-  //       schoolAddress: formData.schoolAddress!,
-  //       schoolLat: formData.schoolLat!,
-  //       schoolLong: formData.schoolLong!,
-  //       photoUrl: uploadedUrl,
-  //     };
-
-  //     console.log("Données enfant envoyées :", childData);
-
-  //     // 6️⃣ Création de l'enfant côté serveur
-  //     const resChild = await createChild(childData);
-  //     console.log("Réponse createChild :", resChild);
-
-  //     alert("Compte créé avec succès !");
-  //     router.push("/login");
-  //   } catch (err) {
-  //     console.error(" Erreur lors de l'inscription :", err);
-  //     setErrors({ global: "Une erreur inattendue est survenue." });
-  //     alert("Une erreur inattendue est survenue.");
-  //   } finally {
-  //     setIsLoading(false);
-  //     console.log("=== handleSubmit terminé ===");
-  //   }
-  // };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("=== handleSubmit déclenché ===");
@@ -271,12 +172,11 @@ export default function SignInPage() {
       const resChild = await createChild(childData);
       console.log("Réponse createChild :", resChild);
 
-      toast.success("Compte complet créé avec succès 🎉");
+      toast.success("Compte complet créé avec succès ");
 
-      // 🕓 Attendre avant redirection (pour laisser le toast visible)
       setTimeout(() => {
         router.push("/login");
-      }, 3000); // 2.5 secondes
+      }, 3000);
     } catch (err) {
       console.error("❌ Erreur lors de l'inscription :", err);
       toast.error("Une erreur inattendue est survenue. Réessaie plus tard.");

@@ -35,7 +35,7 @@ export async function createChild(data: ChildInput) {
   }
 
   // 2️⃣ Créer l'enfant
-const child = await prisma.children.create({
+  const child = await prisma.children.create({
     data: {
       prenom: data.prenomEnfant,
       nom: data.nomEnfant,
@@ -45,7 +45,7 @@ const child = await prisma.children.create({
       parent: { connect: { id: data.parentId } },
       imageprofile: {
         create: {
-          url: data.photoUrl, // <-- on utilise l'URL ici
+          url: data.photoUrl,
         },
       },
       school: { connect: { id: school.id } },
