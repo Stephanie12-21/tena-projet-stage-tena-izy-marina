@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
 //pour la création de compte
 export async function signUp(formData: FormData) {
@@ -69,7 +70,7 @@ export async function signUp(formData: FormData) {
   // 💾 Insertion de l’utilisateur dans ta base Prisma
   try {
     console.log("💽 Tentative d'enregistrement Prisma...");
-    const user = await prisma.user.create({
+    const user = await prisma.users.create({
       data: {
         id: userId,
         nom: userData.nom,
@@ -100,11 +101,11 @@ export async function signUp(formData: FormData) {
 export async function signUpAsParent(formData: FormData) {
   console.log("=== Début de la fonction signUp ===");
 
-  // 🧩 Création du client Supabase (serveur)
+  //  Création du client Supabase (serveur)
   const supabase = await createClient();
-  console.log("✅ Client Supabase serveur créé");
+  console.log(" Client Supabase serveur créé");
 
-  // 🧠 Extraction des données du formulaire
+  // Extraction des données du formulaire
   const userData = {
     nom: (formData.get("nom") as string)?.trim(),
     prenom: (formData.get("prenom") as string)?.trim(),
@@ -112,12 +113,12 @@ export async function signUpAsParent(formData: FormData) {
     phone: (formData.get("phone") as string)?.trim(),
     password: (formData.get("password") as string)?.trim(),
   };
-  console.log("📥 Données utilisateur reçues :", userData);
+  console.log(" Données utilisateur reçues :", userData);
 
   // 🧾 Vérification des champs requis
   const allUserFieldsFilled = Object.values(userData).every(Boolean);
   if (!allUserFieldsFilled) {
-    console.warn("❌ Champs manquants :", userData);
+    console.warn(" Champs manquants :", userData);
     return {
       status: "Tous les champs sont obligatoires.",
       user: null,
@@ -125,7 +126,7 @@ export async function signUpAsParent(formData: FormData) {
   }
 
   // 🔐 Création du compte dans Supabase Auth
-  console.log("🚀 Tentative de création du compte Supabase...");
+  console.log(" Tentative de création du compte Supabase...");
   const { data, error } = await supabase.auth.signUp({
     email: userData.email,
     password: userData.password,
@@ -139,10 +140,10 @@ export async function signUpAsParent(formData: FormData) {
     },
   });
 
-  console.log("📡 Résultat de signUp Supabase :", { data, error });
+  console.log(" Résultat de signUp Supabase :", { data, error });
 
   if (error) {
-    console.error("❌ Erreur Supabase :", error.message);
+    console.error(" Erreur Supabase :", error.message);
     return { status: `Erreur Supabase : ${error.message}`, user: null };
   }
 
@@ -156,12 +157,12 @@ export async function signUpAsParent(formData: FormData) {
   }
 
   const userId = data.user.id;
-  console.log("✅ Nouvel utilisateur Supabase créé avec ID :", userId);
+  console.log(" Nouvel utilisateur Supabase créé avec ID :", userId);
 
-  // 💾 Insertion de l’utilisateur dans ta base Prisma
+  //  Insertion de l’utilisateur dans ta base Prisma
   try {
-    console.log("💽 Tentative d'enregistrement Prisma...");
-    const user = await prisma.user.create({
+    console.log(" Tentative d'enregistrement Prisma...");
+    const user = await prisma.users.create({
       data: {
         id: userId,
         nom: userData.nom,
@@ -172,14 +173,14 @@ export async function signUpAsParent(formData: FormData) {
       },
     });
 
-    console.log("✅ Utilisateur enregistré dans Prisma :", user);
+    console.log(" Utilisateur enregistré dans Prisma :", user);
     await revalidatePath("/", "layout");
-    console.log("♻️ Revalidation du cache Next terminée.");
+    console.log(" Revalidation du cache Next terminée.");
 
     return { status: "success", user };
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
-    console.error("❌ Erreur Prisma :", errorMsg);
+    console.error(" Erreur Prisma :", errorMsg);
 
     return {
       status: `Erreur lors de l'enregistrement Prisma : ${errorMsg}`,
@@ -196,7 +197,7 @@ export async function signIn(formData: FormData) {
   const password = formData.get("password") as string;
 
   // Vérifier si l'utilisateur existe dans ta propre DB
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.users.findUnique({ where: { email } });
 
   if (!user) {
     return {
@@ -316,4 +317,17 @@ export async function sendResetPasswordEmail(email: string) {
       message: "Une erreur est survenue. Veuillez réessayer plus tard.",
     };
   }
+}
+
+//pour se déconnecter
+export async function signOut() {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    redirect("/error");
+  }
+  revalidatePath("/", "layout");
+  redirect("/login");
 }

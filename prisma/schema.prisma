@@ -12,7 +12,7 @@ datasource db {
 }
 
 // Modèle User
-model User {
+model Users {
   id        String   @id @default(uuid())
   nom       String
   prenom    String
@@ -51,7 +51,7 @@ model Children {
   imageprofileId String @unique
 
   // Relation avec le parent (suppression en cascade)
-  parent   User   @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   parentId String
 }
 

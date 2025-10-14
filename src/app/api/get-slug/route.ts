@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { email },
     });
 
@@ -27,7 +27,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const slug = user.nom.toLowerCase().replace(/\s+/g, "-");
+    // Crée un slug unique à partir du prénom + nom
+    const slug = `${user?.prenom}-${user?.nom}`
+      .toLowerCase()
+      .replace(/\s+/g, "-");
 
     console.log("Réponse utilisateur envoyée :", {
       slug,

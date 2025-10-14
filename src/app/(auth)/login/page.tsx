@@ -91,7 +91,7 @@ const LoginPage = () => {
             if (role === "ADMIN") {
               router.push(`/admin/${data.slug}/dashboard`);
             } else if (role === "PARENT") {
-              router.push(`/parent/${data.slug}/abonnement`);
+              router.push(`/parent/${data.slug}/`);
             } else if (role === "DRIVER") {
               router.push(`/driver/${data.slug}/itineraire`);
             } else {
