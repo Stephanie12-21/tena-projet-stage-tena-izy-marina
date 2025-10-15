@@ -3,10 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: Request,
-  context: { params: Promise<{ id: string }> } 
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await context.params; 
+    const { id } = await context.params;
     if (!id) {
       return NextResponse.json(
         { error: "Utilisateur ID manquant" },
