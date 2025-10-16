@@ -6,12 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChildWithRelations } from "@/lib/types/user-interface";
+import {
+  ChildWithRelations,
+  UpdateChildInput,
+} from "@/lib/types/user-interface";
 import Image from "next/image";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { uploadToCloudinary } from "@/app/actions/upload";
-import { updateChild, UpdateChildInput } from "@/app/actions/children";
+import { updateChild } from "@/app/actions/children";
 
 interface GeoapifyFeature {
   properties: {
@@ -425,8 +428,17 @@ export default function EditChildPage() {
           </Button>
         </form>
       </Card>
-
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        toastStyle={{
+          width: "500px",
+        }}
+      />{" "}
     </div>
   );
 }

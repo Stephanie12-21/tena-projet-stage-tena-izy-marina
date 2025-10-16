@@ -291,7 +291,17 @@ export default function CreateChildPage() {
           </Button>
         </form>
       </Card>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        toastStyle={{
+          width: "500px",
+        }}
+      />{" "}
     </div>
   );
 }

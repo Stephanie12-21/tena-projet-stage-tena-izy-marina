@@ -5,9 +5,11 @@ import { useAuth } from "@/app/context/provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import { Home, School, Plus } from "lucide-react";
+import { Home, School, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-
+import { deleteChild } from "@/app/actions/children";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 interface ImageProfile {
   id: string;
   url: string;
@@ -104,7 +106,20 @@ export default function ChildrenPage() {
       </div>
     );
   }
+  // 🔹 Nouvelle fonction pour supprimer un enfant
+  const handleDelete = async (childId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer cet enfant ?")) return;
 
+    try {
+      const res = await deleteChild(childId);
+      if (!res.success) throw new Error("Erreur lors de la suppression");
+      setChildren((prev) => prev.filter((c) => c.id !== childId));
+      toast.success(res.message);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la suppression de l'enfant");
+    }
+  };
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -262,39 +277,54 @@ export default function ChildrenPage() {
                         >
                           Télécharger
                         </Button>
-
                         <Button
-                          variant="outline"
-                          onClick={() => window.print()}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => handleGenerateQr(child.id)}
                         >
-                          Imprimer
+                          Régénérer le QR code
                         </Button>
                       </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleGenerateQr(child.id)}
-                      >
-                        Régénérer le QR code
-                      </Button>
                     </div>
                   )}
                   {/* Bouton Modifier */}
-                  <Button
-                    variant="secondary"
-                    className="w-full mt-4 hover:underline"
-                    onClick={() => router.push(`./children/edit/${child.id}/`)}
-                  >
-                    Modifier les informations
-                  </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="secondary"
+                      className="w-full mt-4 hover:underline"
+                      onClick={() =>
+                        router.push(`./children/edit/${child.id}/`)
+                      }
+                    >
+                      Modifier les informations
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => handleDelete(child.id)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Supprimer l&apos;enfant
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}
           </div>
         )}
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnHover
+        toastStyle={{
+          width: "500px",
+        }}
+      />
     </div>
   );
 }

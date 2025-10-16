@@ -31,3 +31,31 @@ export type ChildWithRelations = Children & {
   imageprofile: Image;
   parent: Users;
 };
+
+export interface UpdateChildInput {
+  id: string;
+  prenom: string;
+  nom: string;
+  adresse: string;
+  homeLat: number;
+  homeLong: number;
+  schoolNom?: string;
+  schoolAdresse?: string;
+  schoolLat?: number;
+  schoolLong?: number;
+  imageUrl: string;
+}
+
+export interface ChildInput {
+  prenomEnfant: string;
+  nomEnfant: string;
+  adresse: string;
+  homeLat: number;
+  homeLong: number;
+  photoUrl: string;
+  parentId: string;
+  schoolName: string;
+  schoolAddress: string;
+  schoolLat: number;
+  schoolLong: number;
+}

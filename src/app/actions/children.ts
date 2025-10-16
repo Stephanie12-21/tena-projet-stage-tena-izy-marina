@@ -1,21 +1,8 @@
 "use server";
 import { prisma } from "@/lib/prisma";
+import { ChildInput, UpdateChildInput } from "@/lib/types/user-interface";
 
-interface ChildInput {
-  prenomEnfant: string;
-  nomEnfant: string;
-  adresse: string;
-  homeLat: number;
-  homeLong: number;
-  photoUrl: string;
-  parentId: string;
-  schoolName: string;
-  schoolAddress: string;
-  schoolLat: number;
-  schoolLong: number;
-}
-
-// création de données enfants
+// création des données enfants
 export async function createChild(data: ChildInput) {
   // 1️⃣ Récupérer ou créer l'école
   let school = await prisma.school.findFirst({
@@ -58,20 +45,7 @@ export async function createChild(data: ChildInput) {
   return child;
 }
 
-export interface UpdateChildInput {
-  id: string;
-  prenom: string;
-  nom: string;
-  adresse: string;
-  homeLat: number;
-  homeLong: number;
-  schoolNom?: string;
-  schoolAdresse?: string;
-  schoolLat?: number;
-  schoolLong?: number;
-  imageUrl: string;
-}
-
+// modification des données enfants
 export async function updateChild(data: UpdateChildInput) {
   const {
     id,
@@ -128,5 +102,33 @@ export async function updateChild(data: UpdateChildInput) {
       status: "error",
       message: "Erreur lors de la mise à jour de l'enfant",
     };
+  }
+}
+
+// suppression des données enfants
+export async function deleteChild(childId: string) {
+  try {
+    // Vérifie si l'enfant existe
+    const existingChild = await prisma.children.findUnique({
+      where: { id: childId },
+    });
+
+    if (!existingChild) {
+      throw new Error("Enfant introuvable");
+    }
+
+    // Supprime l'enfant (les relations cascade avec parent/image sont déjà gérées par Prisma)
+    await prisma.children.delete({
+      where: { id: childId },
+    });
+
+    return { success: true, message: "Enfant supprimé avec succès" };
+  } catch (err: unknown) {
+    console.error("Erreur lors de la suppression :", err);
+
+    const message =
+      err instanceof Error ? err.message : "Erreur lors de la suppression";
+
+    return { success: false, message };
   }
 }
