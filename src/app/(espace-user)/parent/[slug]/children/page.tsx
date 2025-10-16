@@ -5,7 +5,8 @@ import { useAuth } from "@/app/context/provider";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
-import { Home, School } from "lucide-react";
+import { Home, School, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ImageProfile {
   id: string;
@@ -44,7 +45,9 @@ export default function ChildrenPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(true);
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+  const router = useRouter();
 
+  //récupérer les données de l'enfant
   useEffect(() => {
     if (!dbUser?.id) return;
 
@@ -65,7 +68,7 @@ export default function ChildrenPage() {
     fetchChildren();
   }, [dbUser?.id]);
 
-  // Génération du QR code depuis l’API
+  //générer un qr code pour l'enfant
   const handleGenerateQr = async (childId: string) => {
     try {
       const res = await fetch(`/api/children/${childId}/generateQr`);
@@ -105,13 +108,24 @@ export default function ChildrenPage() {
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            Mes enfants
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Gérez les profils et QR codes de vos enfants
-          </p>
+        {/* HEADER + bouton ajouter */}
+        <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">
+              Mes enfants
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Gérez les profils et QR codes de vos enfants
+            </p>
+          </div>
+
+          <Button
+            onClick={() => router.push("./children/addnew")}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Ajouter un enfant
+          </Button>
         </div>
 
         {children.length === 0 ? (
@@ -126,7 +140,14 @@ export default function ChildrenPage() {
               <p className="text-muted-foreground mb-6">
                 Commencez par ajouter le profil de votre premier enfant
               </p>
-              <Button size="lg">Ajouter un enfant</Button>
+              <Button
+                size="lg"
+                onClick={() => router.push("/children/new")}
+                className="flex items-center gap-2 mx-auto"
+              >
+                <Plus className="w-4 h-4" />
+                Ajouter un enfant
+              </Button>
             </div>
           </Card>
         ) : (
@@ -260,6 +281,14 @@ export default function ChildrenPage() {
                       </Button>
                     </div>
                   )}
+                  {/* Bouton Modifier */}
+                  <Button
+                    variant="secondary"
+                    className="w-full mt-4 hover:underline"
+                    onClick={() => router.push(`./children/edit/${child.id}/`)}
+                  >
+                    Modifier les informations
+                  </Button>
                 </div>
               </Card>
             ))}

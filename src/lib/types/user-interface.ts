@@ -1,4 +1,4 @@
-import { Children } from "../../../generated/prisma";
+import { Children, Image, School, Users } from "../../../generated/prisma";
 
 export type SignUpFormData = Partial<Children> & {
   // Informations parent
@@ -24,4 +24,10 @@ export type SignUpFormData = Partial<Children> & {
   // Auth
   password?: string;
   confirmPassword?: string;
+};
+
+export type ChildWithRelations = Children & {
+  school: School;
+  imageprofile: Image;
+  parent: Users;
 };

@@ -3,10 +3,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { User } from "../../../../generated/prisma";
+import { Users } from "../../../../generated/prisma";
 
 interface ParentFormProps {
-  formData: Partial<User> & { password?: string; confirmPassword?: string };
+  formData: Partial<Users> & { password?: string; confirmPassword?: string };
   errors: Record<string, string>;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleNext: () => void;

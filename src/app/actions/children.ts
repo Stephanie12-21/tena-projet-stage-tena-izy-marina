@@ -16,7 +16,7 @@ interface ChildInput {
   schoolLong: number;
 }
 
-// 🔹 Fonction principale
+// création de données enfants
 export async function createChild(data: ChildInput) {
   // 1️⃣ Récupérer ou créer l'école
   let school = await prisma.school.findFirst({
@@ -57,4 +57,77 @@ export async function createChild(data: ChildInput) {
   });
 
   return child;
+}
+
+export interface UpdateChildInput {
+  id: string;
+  prenom: string;
+  nom: string;
+  adresse: string;
+  homeLat: number;
+  homeLong: number;
+  schoolNom?: string;
+  schoolAdresse?: string;
+  schoolLat?: number;
+  schoolLong?: number;
+  imageUrl: string;
+}
+
+export async function updateChild(data: UpdateChildInput) {
+  const {
+    id,
+    prenom,
+    nom,
+    adresse,
+    homeLat,
+    homeLong,
+    schoolNom,
+    schoolAdresse,
+    schoolLat,
+    schoolLong,
+    imageUrl,
+  } = data;
+
+  try {
+    const updatedChild = await prisma.children.update({
+      where: { id },
+      data: {
+        prenom,
+        nom,
+        adresse,
+        homeLat,
+        homeLong,
+        // 🔹 Mise à jour de l'image
+        imageprofile: {
+          upsert: {
+            update: { url: imageUrl },
+            create: { url: imageUrl },
+          },
+        },
+        // 🔹 Mise à jour de l'école via relation
+        school: schoolNom
+          ? {
+              update: {
+                nom: schoolNom,
+                adresse: schoolAdresse ?? "",
+                schoolLat: schoolLat ?? 0,
+                schoolLong: schoolLong ?? 0,
+              },
+            }
+          : undefined,
+      },
+      include: {
+        imageprofile: true,
+        school: true,
+      },
+    });
+
+    return { status: "success", data: updatedChild };
+  } catch (error) {
+    console.error("❌ Erreur updateChild:", error);
+    return {
+      status: "error",
+      message: "Erreur lors de la mise à jour de l'enfant",
+    };
+  }
 }
