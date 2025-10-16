@@ -28,7 +28,7 @@ const MainPageAsParent = () => {
   // 🔹 Déconnexion via server action
   const handleSignOut = async () => {
     await signOut();
-    router.push("/login"); // redirige vers login après déconnexion
+    router.push("/login");
   };
 
   return (
@@ -63,7 +63,7 @@ const MainPageAsParent = () => {
             onClick={() => goTo("abonnement")}
             className="w-full py-6 text-lg"
           >
-            Mes paiements
+            Les abonnements
           </Button>
 
           <Button
