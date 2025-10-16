@@ -1,4 +1,3 @@
-// app/actions/child.ts
 "use server";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +7,7 @@ interface ChildInput {
   adresse: string;
   homeLat: number;
   homeLong: number;
-  photoUrl: string; // <-- on envoie l'URL au lieu du File
+  photoUrl: string;
   parentId: string;
   schoolName: string;
   schoolAddress: string;
