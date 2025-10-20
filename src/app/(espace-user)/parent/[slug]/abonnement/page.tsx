@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -10,205 +10,207 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plan } from "../../../../../../generated/prisma";
+import { useAuth } from "@/app/context/provider";
+import { createCheckoutSession } from "@/app/actions/subscription";
 
-type BillingPeriod = "monthly" | "annual";
-
-interface PricingTier {
-  children: string;
-  discount: number;
-  monthlyPrice: number;
-  annualPrice: number;
-  popular?: boolean;
+interface Child {
+  id: string;
+  prenom: string;
+  nom: string;
+  adresse: string;
+  homeLat: number;
+  homeLong: number;
 }
 
-const pricingTiers: PricingTier[] = [
-  {
-    children: "1-2",
-    discount: 0,
-    monthlyPrice: 22500,
-    annualPrice: 270000,
-  },
-  {
-    children: "3-5",
-    discount: 10,
-    monthlyPrice: 20250,
-    annualPrice: 243000,
-    popular: true,
-  },
-  {
-    children: "6-10",
-    discount: 20,
-    monthlyPrice: 18000,
-    annualPrice: 216000,
-  },
-  {
-    children: "11+",
-    discount: 35,
-    monthlyPrice: 14625,
-    annualPrice: 175500,
-  },
-];
-
 export default function PricingCards() {
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<Plan>("MONTHLY");
+  const { dbUser, loading: authLoading } = useAuth();
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("fr-MG", {
-      style: "decimal",
-      minimumFractionDigits: 0,
-    }).format(price);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(true);
+  const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
+
+  // Récupération des enfants
+  useEffect(() => {
+    if (!dbUser?.id || authLoading) return;
+
+    const fetchChildren = async () => {
+      try {
+        setLoadingChildren(true);
+        const res = await fetch(`/api/users/${dbUser.id}/children`);
+        if (!res.ok)
+          throw new Error("Erreur lors de la récupération des enfants");
+        const data: Child[] = await res.json();
+        setChildren(data);
+      } catch (err) {
+        console.error("Erreur API enfants:", err);
+      } finally {
+        setLoadingChildren(false);
+      }
+    };
+
+    fetchChildren();
+  }, [dbUser?.id, authLoading]);
+
+  const toggleChildSelection = (id: string) => {
+    setSelectedChildren((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
   };
+
+  const priceIds = {
+    MONTHLY: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
+    YEARLY: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
+  };
+
+  const unitPrices = {
+    MONTHLY: 22500,
+    YEARLY: 270000,
+  };
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("fr-MG", { style: "decimal" }).format(price);
+
+  const totalPrice = unitPrices[billingPeriod] * selectedChildren.length;
+
+  // ✅ Server action call
+  const handleSubscribe = async () => {
+    if (
+      selectedChildren.length === 0 ||
+      !dbUser?.id ||
+      !dbUser?.email ||
+      !priceIds[billingPeriod]
+    )
+      return;
+
+    setLoadingCheckout(true);
+
+    try {
+      const sessionUrl = await createCheckoutSession({
+        priceId: priceIds[billingPeriod]!,
+        childrenIds: selectedChildren,
+        parentId: dbUser.id,
+        email: dbUser.email,
+      });
+
+      window.location.href = sessionUrl; // ✅ une seule session
+    } catch (err) {
+      console.error("Erreur checkout Stripe :", err);
+      alert("Erreur lors de la création de la session de paiement.");
+    } finally {
+      setLoadingCheckout(false);
+    }
+  };
+
+  if (authLoading || loadingChildren) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">
+          Chargement des données...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Billing Toggle */}
-        <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 p-1 bg-muted rounded-lg">
-            <button
-              onClick={() => setBillingPeriod("monthly")}
-              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
-                billingPeriod === "monthly"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Mensuel
-            </button>
-            <button
-              onClick={() => setBillingPeriod("annual")}
-              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
-                billingPeriod === "annual"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Annuel
-            </button>
-          </div>
+      <div className="max-w-3xl mx-auto space-y-8 text-center">
+        {/* Toggle mensuel / annuel */}
+        <div className="inline-flex items-center gap-2 p-1 bg-muted rounded-lg">
+          <button
+            onClick={() => setBillingPeriod("MONTHLY")}
+            className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
+              billingPeriod === "MONTHLY"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setBillingPeriod("YEARLY")}
+            className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
+              billingPeriod === "YEARLY"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Annuel
+          </button>
         </div>
 
-        {/* Pricing Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-10">
-          {pricingTiers.map((tier, index) => {
-            const price =
-              billingPeriod === "monthly"
-                ? tier.monthlyPrice
-                : tier.annualPrice;
-            const savings =
-              billingPeriod === "annual"
-                ? tier.monthlyPrice * 12 - tier.annualPrice
-                : 0;
+        {/* Carte principale */}
+        <Card className="max-w-md mx-auto shadow-md hover:shadow-lg transition-all">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold">
+              Abonnement {billingPeriod === "MONTHLY" ? "Mensuel" : "Annuel"}
+            </CardTitle>
+            <CardDescription>
+              Prix fixe par enfant — sans réduction
+            </CardDescription>
+          </CardHeader>
 
-            return (
-              <Card
-                key={index}
-                className={`relative flex flex-col transition-all hover:shadow-lg ${
-                  tier.popular ? "border-primary shadow-md scale-105" : ""
-                }`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-accent text-accent-foreground px-4 py-1">
-                      Populaire
-                    </Badge>
-                  </div>
+          <CardContent className="space-y-6 text-left">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-2 text-center">
+                Sélectionnez les enfants à abonner :
+              </p>
+              <div className="space-y-2">
+                {children.length === 0 ? (
+                  <p className="text-center text-muted-foreground text-sm">
+                    Aucun enfant trouvé pour ce compte parent.
+                  </p>
+                ) : (
+                  children.map((child) => (
+                    <label
+                      key={child.id}
+                      className="flex items-center gap-2 border rounded-lg p-2 cursor-pointer hover:bg-muted transition"
+                    >
+                      <Checkbox
+                        checked={selectedChildren.includes(child.id)}
+                        onCheckedChange={() => toggleChildSelection(child.id)}
+                      />
+                      <span>
+                        {child.prenom} {child.nom}
+                      </span>
+                    </label>
+                  ))
                 )}
+              </div>
+            </div>
 
-                <CardHeader className="text-center pb-8 pt-6">
-                  <div className="mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Nombre d&apos;enfants
-                    </span>
-                  </div>
-                  <CardTitle className="text-3xl font-bold">
-                    {tier.children}
-                  </CardTitle>
-                  {tier.discount > 0 && (
-                    <CardDescription className="mt-2">
-                      <Badge variant="secondary" className="text-xs">
-                        -{tier.discount}% de réduction
-                      </Badge>
-                    </CardDescription>
-                  )}
-                </CardHeader>
+            <div className="border-t pt-4 text-center">
+              <p className="text-lg font-semibold">
+                Total :{" "}
+                <span className="text-primary font-bold">
+                  {formatPrice(totalPrice)} MGA
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground">
+                pour {selectedChildren.length || 0}{" "}
+                {selectedChildren.length > 1 ? "enfants" : "enfant"}
+              </p>
+            </div>
+          </CardContent>
 
-                <CardContent className="flex-1 space-y-6">
-                  <div className="text-center">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-4xl font-bold text-foreground">
-                        {formatPrice(price)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">MGA</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      par enfant / {billingPeriod === "monthly" ? "mois" : "an"}
-                    </p>
-                    {billingPeriod === "annual" && savings > 0 && (
-                      <p className="text-xs text-accent font-medium mt-2">
-                        Économisez {formatPrice(savings)} MGA/an
-                      </p>
-                    )}
-                  </div>
+          <CardFooter>
+            <Button
+              className="w-full"
+              size="lg"
+              disabled={selectedChildren.length === 0 || loadingCheckout}
+              onClick={handleSubscribe}
+            >
+              {loadingCheckout ? "Redirection..." : "Confirmer l'abonnement"}
+            </Button>
+          </CardFooter>
+        </Card>
 
-                  <div className="space-y-3 pt-4">
-                    <div className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        Accès complet à la plateforme
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        Suivi personnalisé
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                      <span className="text-sm text-muted-foreground">
-                        Support prioritaire
-                      </span>
-                    </div>
-                    {tier.discount > 0 && (
-                      <div className="flex items-start gap-2">
-                        <Check className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                        <span className="text-sm text-muted-foreground">
-                          Réduction familiale
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-
-                <CardFooter className="pt-4">
-                  <Button
-                    className={`w-full ${
-                      tier.popular
-                        ? "bg-primary hover:bg-primary/90"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                    }`}
-                    size="lg"
-                  >
-                    Choisir ce plan
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Additional Info */}
-        <div className="text-center mt-12 space-y-2">
-          <p className="text-sm text-muted-foreground">
-            Tous les prix sont en Ariary Malgache (MGA)
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Les réductions sont automatiquement appliquées selon le nombre
-            d&apos;enfants inscrits
-          </p>
+        <div className="text-sm text-muted-foreground space-y-1">
+          <p>Tous les prix sont en Ariary Malgache (MGA).</p>
+          <p>Chaque enfant nécessite un abonnement individuel.</p>
         </div>
       </div>
     </div>

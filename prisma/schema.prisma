@@ -18,12 +18,13 @@ model Users {
   prenom    String
   email     String   @unique
   phone     String   @unique
-  role      Role     @default(ADMIN)
+  role      Role     @default(PARENT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relation avec les enfants
-  children Children[] // un parent peut avoir plusieurs enfants
+  // Relations
+  children      Children[] // Un parent peut avoir plusieurs enfants
+  subscriptions Subscription[] // Un parent peut avoir plusieurs abonnements
 }
 
 // Enum des rôles
@@ -38,23 +39,28 @@ model Children {
   id       String @id @default(uuid())
   nom      String
   prenom   String
-  adresse  String //adresse de l'enfant 
+  adresse  String
   homeLat  Float
   homeLong Float
 
-  // Relation vers l'école
+  // École
   school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   schoolId String
 
-  // Relation obligatoire avec l'image de profil
+  // Image de profil
   imageprofile   Image  @relation(fields: [imageprofileId], references: [id])
   imageprofileId String @unique
 
-  // Relation avec le parent (suppression en cascade)
+  // Parent
   parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   parentId String
+
+  // Abonnement (facultatif)
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  subscriptionId String?
 }
 
+// Modèle School
 model School {
   id         String @id @default(uuid())
   nom        String
@@ -70,5 +76,29 @@ model School {
 model Image {
   id    String    @id @default(uuid())
   url   String
-  child Children? @relation
+  child Children?
+}
+
+// Modèle Subscription
+model Subscription {
+  id          String    @id @default(cuid())
+  stripeSubId String?   @unique
+  plan        Plan
+  status      String
+  emailSent   Boolean   @default(false)
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  // Lien vers le parent
+  parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  parentId String
+
+  // Enfants concernés par cet abonnement
+  children Children[]
+}
+
+// Enum du plan
+enum Plan {
+  MONTHLY
+  YEARLY
 }

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { deleteChild } from "@/app/actions/children";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 interface ImageProfile {
   id: string;
   url: string;
@@ -106,7 +107,8 @@ export default function ChildrenPage() {
       </div>
     );
   }
-  // 🔹 Nouvelle fonction pour supprimer un enfant
+
+  // Nouvelle fonction pour supprimer un enfant
   const handleDelete = async (childId: string) => {
     if (!confirm("Voulez-vous vraiment supprimer cet enfant ?")) return;
 
@@ -120,6 +122,7 @@ export default function ChildrenPage() {
       toast.error("Erreur lors de la suppression de l'enfant");
     }
   };
+
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">

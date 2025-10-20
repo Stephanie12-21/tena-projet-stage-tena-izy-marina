@@ -2,8 +2,8 @@ import { Children, Image, School, Users } from "../../../generated/prisma";
 
 export type SignUpFormData = Partial<Children> & {
   // Informations parent
-  prenom?: string; // anciennement prenomParent
-  nom?: string; // anciennement nomParent
+  prenom?: string;
+  nom?: string;
   email?: string;
   phone?: string;
 
@@ -58,4 +58,12 @@ export interface ChildInput {
   schoolAddress: string;
   schoolLat: number;
   schoolLong: number;
+}
+
+export interface PricingTier {
+  children: string;
+  discount: number;
+  monthlyPrice: number;
+  annualPrice: number;
+  popular?: boolean;
 }
