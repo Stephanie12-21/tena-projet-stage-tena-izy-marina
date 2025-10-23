@@ -16,6 +16,7 @@ export async function GET(
       include: {
         school: true,
         imageprofile: true,
+        subscription: true,
       },
     });
     return NextResponse.json(children);

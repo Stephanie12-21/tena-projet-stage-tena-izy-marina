@@ -4,16 +4,19 @@ import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
+  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plan } from "../../../../../../generated/prisma";
 import { useAuth } from "@/app/context/provider";
-import { createCheckoutSession } from "@/app/actions/subscription";
+import {
+  cancelSubscription,
+  createCheckoutSession,
+} from "@/app/actions/subscription";
 
 interface Child {
   id: string;
@@ -22,6 +25,12 @@ interface Child {
   adresse: string;
   homeLat: number;
   homeLong: number;
+  subscription?: {
+    id: string;
+    status: string;
+    plan: string;
+    cancelAtPeriodEnd: boolean;
+  } | null;
 }
 
 export default function PricingCards() {
@@ -33,7 +42,9 @@ export default function PricingCards() {
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
-  // Récupération des enfants
+  const subscribedChildren = children.filter((c) => c.subscription?.id);
+  const availableChildren = children.filter((c) => !c.subscription?.id);
+
   useEffect(() => {
     if (!dbUser?.id || authLoading) return;
 
@@ -76,7 +87,6 @@ export default function PricingCards() {
 
   const totalPrice = unitPrices[billingPeriod] * selectedChildren.length;
 
-  // ✅ Server action call
   const handleSubscribe = async () => {
     if (
       selectedChildren.length === 0 ||
@@ -87,7 +97,6 @@ export default function PricingCards() {
       return;
 
     setLoadingCheckout(true);
-
     try {
       const sessionUrl = await createCheckoutSession({
         priceId: priceIds[billingPeriod]!,
@@ -95,14 +104,31 @@ export default function PricingCards() {
         parentId: dbUser.id,
         email: dbUser.email,
       });
-
-      window.location.href = sessionUrl; // ✅ une seule session
+      window.location.href = sessionUrl;
     } catch (err) {
       console.error("Erreur checkout Stripe :", err);
       alert("Erreur lors de la création de la session de paiement.");
     } finally {
       setLoadingCheckout(false);
     }
+  };
+
+  const handleCancelSubscription = async (childId: string) => {
+    try {
+      const child = children.find((c) => c.id === childId);
+      if (!child?.subscription?.id) return alert("Aucun abonnement trouvé.");
+
+      await cancelSubscription(child.subscription?.id);
+      alert("L'abonnement sera annulé à la fin de la période en cours.");
+    } catch (err) {
+      console.error("Erreur annulation:", err);
+      alert("Impossible d'annuler l'abonnement.");
+    }
+  };
+
+  const handleResumeSubscription = async (childId: string) => {
+    // TODO: appeler une API pour reprendre l'abonnement de cet enfant
+    console.log("Reprendre abonnement pour :", childId);
   };
 
   if (authLoading || loadingChildren) {
@@ -142,7 +168,7 @@ export default function PricingCards() {
           </button>
         </div>
 
-        {/* Carte principale */}
+        {/* Carte principale pour abonnement des enfants disponibles */}
         <Card className="max-w-md mx-auto shadow-md hover:shadow-lg transition-all">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">
@@ -159,12 +185,12 @@ export default function PricingCards() {
                 Sélectionnez les enfants à abonner :
               </p>
               <div className="space-y-2">
-                {children.length === 0 ? (
+                {availableChildren.length === 0 ? (
                   <p className="text-center text-muted-foreground text-sm">
-                    Aucun enfant trouvé pour ce compte parent.
+                    Aucun enfant disponible pour un nouvel abonnement.
                   </p>
                 ) : (
-                  children.map((child) => (
+                  availableChildren.map((child) => (
                     <label
                       key={child.id}
                       className="flex items-center gap-2 border rounded-lg p-2 cursor-pointer hover:bg-muted transition"
@@ -208,10 +234,79 @@ export default function PricingCards() {
           </CardFooter>
         </Card>
 
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p>Tous les prix sont en Ariary Malgache (MGA).</p>
-          <p>Chaque enfant nécessite un abonnement individuel.</p>
-        </div>
+        {/* Tableau des enfants déjà abonnés */}
+        {subscribedChildren.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-2">Enfants déjà abonnés</h3>
+            <div className="overflow-x-auto">
+              <table className="table-auto w-full border border-muted rounded-md">
+                <thead className="bg-muted text-left">
+                  <tr>
+                    <th className="px-3 py-2">Nom</th>
+                    <th className="px-3 py-2">Prénom</th>
+                    <th className="px-3 py-2">Statut de l&apos;abonnement</th>
+                    <th className="px-3 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscribedChildren.map((child) => (
+                    <tr key={child.id} className="border-t border-muted">
+                      <td className="px-3 py-2">{child.nom}</td>
+                      <td className="px-3 py-2">{child.prenom}</td>
+                      <td className="px-3 py-2">
+                        {/* ✅ Affichage du statut avec style */}
+                        <span
+                          className={`px-2 py-1 text-xs rounded ${
+                            child.subscription?.cancelAtPeriodEnd
+                              ? "bg-yellow-100 text-yellow-700"
+                              : child.subscription?.status === "active"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {child.subscription?.cancelAtPeriodEnd
+                            ? "Actif jusqu'à la fin de la période"
+                            : child.subscription?.status === "active"
+                            ? "Active"
+                            : "Canceled"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 flex gap-2">
+                        {/* Bouton Annuler */}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleCancelSubscription(child.id)}
+                          disabled={
+                            child.subscription?.status === "active"
+                              ? false
+                              : true
+                          }
+                        >
+                          Annuler
+                        </Button>
+
+                        {/* Bouton Reprendre */}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleResumeSubscription(child.id)}
+                          disabled={
+                            child.subscription?.status === "active"
+                              ? true
+                              : false
+                          }
+                        >
+                          Reprendre
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

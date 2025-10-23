@@ -62,3 +62,42 @@ export async function createCheckoutSession({
 
   return session.url;
 }
+
+export async function cancelSubscription(subscriptionId: string) {
+  try {
+    // 1️⃣ Récupérer l'abonnement en DB
+    const subscription = await prisma.subscription.findUnique({
+      where: { id: subscriptionId }, // ID Prisma
+    });
+
+    if (!subscription) {
+      throw new Error("Abonnement introuvable en base");
+    }
+
+    if (!subscription.stripeSubId) {
+      throw new Error("Aucun ID Stripe associé à cet abonnement");
+    }
+
+    // 2️⃣ Annulation à la fin de la période côté Stripe
+    const updatedStripeSub = await stripe.subscriptions.update(
+      subscription.stripeSubId,
+      {
+        cancel_at_period_end: true,
+      }
+    );
+
+    // 3️⃣ Mettre à jour la DB avec le status réel de Stripe
+    await prisma.subscription.update({
+      where: { id: subscription.id },
+      data: {
+        cancelAtPeriodEnd: updatedStripeSub.cancel_at_period_end,
+        status: updatedStripeSub.status, // ⚡ status réel de Stripe
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur annulation abonnement:", error);
+    throw new Error("Impossible d'annuler l'abonnement.");
+  }
+}
