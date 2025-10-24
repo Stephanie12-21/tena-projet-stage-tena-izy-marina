@@ -16,6 +16,7 @@ import { useAuth } from "@/app/context/provider";
 import {
   cancelSubscription,
   createCheckoutSession,
+  resumeSubscription,
 } from "@/app/actions/subscription";
 
 interface Child {
@@ -127,8 +128,20 @@ export default function PricingCards() {
   };
 
   const handleResumeSubscription = async (childId: string) => {
-    // TODO: appeler une API pour reprendre l'abonnement de cet enfant
-    console.log("Reprendre abonnement pour :", childId);
+    console.log("id enfant reprise :", childId);
+    try {
+      const res = await resumeSubscription(childId);
+
+      if (res.error) {
+        alert(res.error);
+        return;
+      }
+
+      alert(res.message || "Abonnement repris avec succès ✅");
+    } catch (err) {
+      console.error("Erreur reprise abonnement:", err);
+      alert("Impossible de reprendre l'abonnement ❌");
+    }
   };
 
   if (authLoading || loadingChildren) {
@@ -144,7 +157,6 @@ export default function PricingCards() {
   return (
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-8 text-center">
-        {/* Toggle mensuel / annuel */}
         <div className="inline-flex items-center gap-2 p-1 bg-muted rounded-lg">
           <button
             onClick={() => setBillingPeriod("MONTHLY")}
@@ -168,7 +180,6 @@ export default function PricingCards() {
           </button>
         </div>
 
-        {/* Carte principale pour abonnement des enfants disponibles */}
         <Card className="max-w-md mx-auto shadow-md hover:shadow-lg transition-all">
           <CardHeader>
             <CardTitle className="text-2xl font-bold">
@@ -234,7 +245,6 @@ export default function PricingCards() {
           </CardFooter>
         </Card>
 
-        {/* Tableau des enfants déjà abonnés */}
         {subscribedChildren.length > 0 && (
           <div className="mt-8">
             <h3 className="text-lg font-semibold mb-2">Enfants déjà abonnés</h3>
@@ -244,7 +254,7 @@ export default function PricingCards() {
                   <tr>
                     <th className="px-3 py-2">Nom</th>
                     <th className="px-3 py-2">Prénom</th>
-                    <th className="px-3 py-2">Statut de l&apos;abonnement</th>
+                    <th className="px-3 py-2">Statut</th>
                     <th className="px-3 py-2">Actions</th>
                   </tr>
                 </thead>
@@ -254,47 +264,53 @@ export default function PricingCards() {
                       <td className="px-3 py-2">{child.nom}</td>
                       <td className="px-3 py-2">{child.prenom}</td>
                       <td className="px-3 py-2">
-                        {/* ✅ Affichage du statut avec style */}
                         <span
                           className={`px-2 py-1 text-xs rounded ${
                             child.subscription?.cancelAtPeriodEnd
                               ? "bg-yellow-100 text-yellow-700"
-                              : child.subscription?.status === "active"
+                              : child.subscription?.status?.toLowerCase() ===
+                                "active"
                               ? "bg-green-100 text-green-700"
                               : "bg-red-100 text-red-700"
                           }`}
                         >
                           {child.subscription?.cancelAtPeriodEnd
                             ? "Actif jusqu'à la fin de la période"
-                            : child.subscription?.status === "active"
-                            ? "Active"
-                            : "Canceled"}
+                            : child.subscription?.status?.toLowerCase() ===
+                              "active"
+                            ? "Actif"
+                            : "Annulé"}
                         </span>
                       </td>
                       <td className="px-3 py-2 flex gap-2">
-                        {/* Bouton Annuler */}
                         <Button
                           size="sm"
                           variant="destructive"
                           onClick={() => handleCancelSubscription(child.id)}
                           disabled={
-                            child.subscription?.status === "active"
-                              ? false
-                              : true
+                            !(
+                              child.subscription?.status?.toLowerCase() ===
+                                "active" &&
+                              child.subscription?.cancelAtPeriodEnd === false
+                            )
                           }
                         >
                           Annuler
                         </Button>
 
-                        {/* Bouton Reprendre */}
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleResumeSubscription(child.id)}
                           disabled={
-                            child.subscription?.status === "active"
-                              ? true
-                              : false
+                            !(
+                              (child.subscription?.status?.toLowerCase() ===
+                                "active" &&
+                                child.subscription?.cancelAtPeriodEnd ===
+                                  true) ||
+                              child.subscription?.status?.toLowerCase() !==
+                                "active"
+                            )
                           }
                         >
                           Reprendre
