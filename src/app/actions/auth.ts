@@ -448,7 +448,6 @@ export async function updateParentPassword({
     return { success: true, message: "Mot de passe mis à jour avec succès ✅" };
   } catch (error: unknown) {
     console.error("Unexpected error:", error);
-    // Vérifie si c’est bien une instance de Error pour accéder à message
     const message = error instanceof Error ? error.message : "Erreur inconnue";
     return { success: false, message: `Erreur serveur: ${message}` };
   }
