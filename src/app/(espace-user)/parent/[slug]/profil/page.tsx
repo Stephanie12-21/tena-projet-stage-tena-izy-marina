@@ -7,14 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import * as z from "zod";
-import { updateParentProfile } from "@/app/actions/auth";
+import { updateParentProfile, updateParentPassword } from "@/app/actions/auth";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-// Validation Zod pour les infos personnelles
+// Validation Zod pour infos personnelles
 const profileSchema = z.object({
   prenom: z.string().min(1, "Le prénom est requis"),
   nom: z.string().min(1, "Le nom est requis"),
   email: z.string().email("Email invalide"),
   phone: z.string().regex(/^\+?[0-9\s]{7,15}$/, "Numéro de téléphone invalide"),
+});
+
+// Validation Zod pour mot de passe
+const passwordSchema = z.object({
+  password: z.string().min(6, "Le mot de passe actuel est requis"),
+  newPassword: z
+    .string()
+    .min(6, "Le nouveau mot de passe doit contenir au moins 6 caractères"),
 });
 
 export default function ProfilParent() {
@@ -27,70 +37,72 @@ export default function ProfilParent() {
   const [phone, setPhone] = useState(dbUser?.phone || "");
   const [editInfo, setEditInfo] = useState(false);
   const [loadingInfo, setLoadingInfo] = useState(false);
-  const [messageInfo, setMessageInfo] = useState("");
 
   // Mot de passe
   const [editPass, setEditPass] = useState(false);
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loadingPass, setLoadingPass] = useState(false);
-  const [messagePass, setMessagePass] = useState("");
 
-  // 🔹 Mettre à jour toutes les données personnelles
-  const updateProfile = async () => {
-    setMessageInfo("");
+  // 🔹 Mettre à jour le profil
+  const updateProfileHandler = async () => {
     setLoadingInfo(true);
 
-    // Validation Zod
     const parsed = profileSchema.safeParse({ nom, prenom, email, phone });
     if (!parsed.success) {
-      // Construction d'un message d'erreur concaténé
-      const msg = parsed.error.issues.map((issue) => issue.message).join(", ");
-      setMessageInfo(msg);
+      const msg = parsed.error.issues.map((i) => i.message).join(", ");
+      toast.error(msg);
       setLoadingInfo(false);
       return;
     }
 
     try {
       const res = await updateParentProfile({ nom, prenom, email, phone });
-
-      setLoadingInfo(false);
-      setMessageInfo(res.message);
-      if (res.success) setEditInfo(false);
-    } catch (error: unknown) {
-      setLoadingInfo(false);
-      if (error instanceof Error) {
-        setMessageInfo(error.message);
+      if (res.success) {
+        toast.success(res.message);
+        setEditInfo(false);
       } else {
-        setMessageInfo("Erreur lors de la mise à jour du profil.");
+        toast.error(res.message);
       }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Erreur serveur";
+      toast.error(msg);
+    } finally {
+      setLoadingInfo(false);
     }
   };
 
-  const updatePassword = async () => {
+  // 🔹 Mettre à jour le mot de passe
+  const updatePasswordHandler = async () => {
     setLoadingPass(true);
-    setMessagePass("");
+
+    const parsed = passwordSchema.safeParse({ password, newPassword });
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map((i) => i.message).join(", ");
+      toast.error(msg);
+      setLoadingPass(false);
+      return;
+    }
 
     try {
-      const res = await fetch("/api/parent/update-password", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password, newPassword }),
+      const res = await updateParentPassword({
+        email: dbUser?.email || "",
+        password,
+        newPassword,
       });
-
-      const data = await res.json();
-      setLoadingPass(false);
-      setMessagePass(data.message);
-      if (data.success) setEditPass(false);
-      setPassword("");
-      setNewPassword("");
-    } catch (error: unknown) {
-      setLoadingPass(false);
-      if (error instanceof Error) {
-        setMessagePass(error.message);
+      if (res.success) {
+        toast.success(res.message);
+        setEditPass(false);
+        setPassword("");
+        setNewPassword("");
       } else {
-        setMessagePass("Erreur lors du changement de mot de passe.");
+        toast.error(res.message);
       }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Erreur serveur";
+      toast.error(msg);
+    } finally {
+      setLoadingPass(false);
     }
   };
 
@@ -137,8 +149,8 @@ export default function ProfilParent() {
             />
             <Input
               disabled={!editInfo}
-              value={phone}
               type="tel"
+              value={phone}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setPhone(e.target.value)
               }
@@ -146,7 +158,7 @@ export default function ProfilParent() {
             />
             {editInfo && (
               <div className="flex gap-2">
-                <Button disabled={loadingInfo} onClick={updateProfile}>
+                <Button disabled={loadingInfo} onClick={updateProfileHandler}>
                   {loadingInfo ? "Mise à jour..." : "Sauvegarder"}
                 </Button>
                 <Button
@@ -157,7 +169,6 @@ export default function ProfilParent() {
                 </Button>
               </div>
             )}
-            {messageInfo && <p className="text-red-500">{messageInfo}</p>}
           </CardContent>
         </Card>
 
@@ -191,7 +202,10 @@ export default function ProfilParent() {
                   placeholder="Nouveau mot de passe"
                 />
                 <div className="flex gap-2">
-                  <Button disabled={loadingPass} onClick={updatePassword}>
+                  <Button
+                    disabled={loadingPass}
+                    onClick={updatePasswordHandler}
+                  >
                     {loadingPass ? "Mise à jour..." : "Changer"}
                   </Button>
                   <Button
@@ -201,100 +215,12 @@ export default function ProfilParent() {
                     Annuler
                   </Button>
                 </div>
-                {messagePass && <p className="text-red-500">{messagePass}</p>}
               </>
             )}
           </CardContent>
         </Card>
       </div>
+      <ToastContainer position="top-right" autoClose={5000} />
     </ProtectedRoute>
   );
 }
-// "use client";
-
-// import { useState } from "react";
-// import { toast } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-// import { ProtectedRoute } from "@/app/context/protectedtoute";
-// import { useAuth } from "@/app/context/provider";
-// import z from "zod";
-// import { updateParentProfile } from "@/app/actions/auth";
-// import ParentForm from "@/components/features/authform/ParentForm";
-
-// // Validation Zod
-// const parentSchema = z.object({
-//   prenom: z.string().min(1, "Le prénom est requis"),
-//   nom: z.string().min(1, "Le nom est requis"),
-//   email: z.string().email("Email invalide"),
-//   phone: z.string().regex(/^\+?[0-9\s]{7,15}$/, "Numéro de téléphone invalide"),
-// });
-
-// export default function ProfilParentWrapper() {
-//   const { dbUser } = useAuth();
-//   const [formData, setFormData] = useState({
-//     prenom: dbUser?.prenom || "",
-//     nom: dbUser?.nom || "",
-//     email: dbUser?.email || "",
-//     phone: dbUser?.phone || "",
-//   });
-//   const [errors, setErrors] = useState<Record<string, string>>({});
-//   const [loading, setLoading] = useState(false);
-
-//   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleNext = async () => {
-//     setLoading(true);
-//     setErrors({});
-
-//     // ✅ Validation Zod côté client
-//     const result = parentSchema.safeParse(formData);
-//     if (!result.success) {
-//       const fieldErrors: Record<string, string> = {};
-//       result.error.issues.forEach((issue) => {
-//         if (issue.path[0]) fieldErrors[issue.path[0] as string] = issue.message;
-//       });
-//       setErrors(fieldErrors);
-//       toast.error("Certains champs sont invalides. Vérifie le formulaire.");
-//       setLoading(false);
-//       return;
-//     }
-
-//     try {
-//       // ✅ Appel du server action
-//       const res = await updateParentProfile({
-//         nom: formData.nom,
-//         prenom: formData.prenom,
-//         email: formData.email,
-//         phone: formData.phone,
-//       });
-
-//       if (res.success) {
-//         toast.success(res.message);
-//       } else {
-//         toast.error(res.message);
-//       }
-//     } catch (error: unknown) {
-//       const msg = error instanceof Error ? error.message : "Erreur serveur";
-//       toast.error(msg);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <ProtectedRoute>
-//       <div className="max-w-2xl mx-auto p-6">
-//         <h1 className="text-2xl font-semibold mb-4">Mon Profil</h1>
-//         <ParentForm
-//           formData={formData}
-//           errors={errors}
-//           handleInputChange={handleInputChange}
-//           handleNext={handleNext}
-//         />
-//       </div>
-//     </ProtectedRoute>
-//   );
-// }

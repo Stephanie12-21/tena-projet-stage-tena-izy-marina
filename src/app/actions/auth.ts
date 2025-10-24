@@ -399,3 +399,57 @@ export async function updateParentProfile({
     return { success: false, message: `Erreur serveur: ${message}` };
   }
 }
+
+//pour la modification du mot de passe
+export async function updateParentPassword({
+  email,
+  password,
+  newPassword,
+}: {
+  email: string;
+  password: string;
+  newPassword: string;
+}) {
+  try {
+    const supabase = createClient();
+    // ✅ On récupère l'utilisateur connecté
+    const {
+      data: { user },
+    } = await (await supabase).auth.getUser();
+    if (!user) {
+      return {
+        success: false,
+        message: "Non autorisé. Veuillez vous connecter.",
+      };
+    }
+
+    // ✅ On tente de se reconnecter pour vérifier l'ancien mot de passe
+    const { error: signInError } = await (
+      await supabase
+    ).auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (signInError) {
+      return { success: false, message: "Ancien mot de passe incorrect." };
+    }
+    // ✅ On met à jour le mot de passe
+    const { error: updateError } = await (
+      await supabase
+    ).auth.updateUser({
+      password: newPassword,
+    });
+    if (updateError) {
+      return {
+        success: false,
+        message: `Erreur mise à jour: ${updateError.message}`,
+      };
+    }
+    return { success: true, message: "Mot de passe mis à jour avec succès ✅" };
+  } catch (error: unknown) {
+    console.error("Unexpected error:", error);
+    // Vérifie si c’est bien une instance de Error pour accéder à message
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
+    return { success: false, message: `Erreur serveur: ${message}` };
+  }
+}
