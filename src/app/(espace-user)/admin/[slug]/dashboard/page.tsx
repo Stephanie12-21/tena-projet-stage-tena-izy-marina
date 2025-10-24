@@ -65,7 +65,7 @@ const MainPageAsParent = () => {
           </Button>
 
           <Button
-            onClick={() => goTo("chauffeurs")}
+            onClick={() => goTo("drivers")}
             className="w-full py-6 text-lg"
           >
             Les chauffeurs

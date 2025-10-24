@@ -67,3 +67,13 @@ export interface PricingTier {
   annualPrice: number;
   popular?: boolean;
 }
+
+export interface User {
+  id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  phone: string;
+  role: string;
+  createdAt: string;
+}
