@@ -331,3 +331,71 @@ export async function signOut() {
   revalidatePath("/", "layout");
   redirect("/login");
 }
+
+//pour la modification du profil
+export async function updateParentProfile({
+  nom,
+  prenom,
+  email,
+  phone,
+}: {
+  nom: string;
+  prenom: string;
+  email: string;
+  phone: string;
+}) {
+  try {
+    const supabase = createClient();
+
+    // ✅ On récupère l'utilisateur connecté
+    const {
+      data: { user },
+    } = await (await supabase).auth.getUser();
+
+    if (!user) {
+      return {
+        success: false,
+        message: "Non autorisé. Veuillez vous connecter.",
+      };
+    }
+
+    // ✅ Vérifier s'il y a déjà un compte avec le même email (anti duplication)
+    const emailExists = await prisma.users.findFirst({
+      where: { email, NOT: { id: user.id } },
+    });
+
+    if (emailExists) {
+      return { success: false, message: "Cet email est déjà utilisé !" };
+    }
+
+    // ✅ 1. Mettre à jour dans Supabase Auth
+    const { error: authError } = await (
+      await supabase
+    ).auth.updateUser({
+      email,
+      data: { nom, prenom, phone },
+    });
+
+    if (authError) {
+      return {
+        success: false,
+        message: `Erreur Supabase: ${authError.message}`,
+      };
+    }
+
+    // ✅ 2. Mettre à jour dans Prisma
+    await prisma.users.update({
+      where: { id: user.id },
+      data: { nom, prenom, email, phone },
+    });
+
+    return { success: true, message: "Profil mis à jour avec succès ✅" };
+  } catch (error: unknown) {
+    console.error("Unexpected error:", error);
+
+    // Vérifie si c’est bien une instance de Error pour accéder à message
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
+
+    return { success: false, message: `Erreur serveur: ${message}` };
+  }
+}

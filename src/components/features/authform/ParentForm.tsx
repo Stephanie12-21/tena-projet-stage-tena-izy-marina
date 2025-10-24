@@ -20,8 +20,6 @@ export default function ParentForm({
 }: ParentFormProps) {
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Informations du parent</h2>
-
       <div className="flex-1 space-y-2">
         <Label htmlFor="prenom">Prénom</Label>
         <Input

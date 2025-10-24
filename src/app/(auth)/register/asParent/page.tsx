@@ -214,12 +214,18 @@ export default function SignInPage() {
           <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">
             {/* Étape 1 : Infos parent */}
             {step === 1 && (
-              <ParentForm
-                formData={formData}
-                errors={errors}
-                handleInputChange={handleInputChange}
-                handleNext={handleNext}
-              />
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold">
+                  Informations du parent
+                </h2>
+
+                <ParentForm
+                  formData={formData}
+                  errors={errors}
+                  handleInputChange={handleInputChange}
+                  handleNext={handleNext}
+                />
+              </div>
             )}
 
             {/* Étape 2 : Infos enfant */}

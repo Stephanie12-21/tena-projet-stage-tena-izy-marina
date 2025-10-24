@@ -14,7 +14,6 @@ const MainPageAsParent = () => {
   if (loading) return <div>Chargement...</div>;
   if (!user) return <div>Vous n’êtes pas connecté.</div>;
 
-  // 🔹 Crée un slug unique à partir du prénom + nom
   const slug = `${dbUser?.prenom}-${dbUser?.nom}`
     .toLowerCase()
     .replace(/\s+/g, "-");
@@ -78,6 +77,12 @@ const MainPageAsParent = () => {
             className="w-full py-6 text-lg"
           >
             Notifications
+          </Button>
+          <Button
+            onClick={() => goTo("profil")}
+            className="w-full py-6 text-lg"
+          >
+            Profil utilisateur
           </Button>
 
           {/* 🔹 Bouton de déconnexion */}
