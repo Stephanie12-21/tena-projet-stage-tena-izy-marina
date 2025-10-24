@@ -23,8 +23,9 @@ model Users {
   updatedAt DateTime @updatedAt
 
   // Relations
-  children      Children[] // Un parent peut avoir plusieurs enfants
-  subscriptions Subscription[] // Un parent peut avoir plusieurs abonnements
+  children      Children[] // Pour les parents
+  subscriptions Subscription[] // Pour les parents
+  driverProfile DriverProfile? // Pour les chauffeurs
 }
 
 // Enum des rôles
@@ -32,6 +33,48 @@ enum Role {
   PARENT
   ADMIN
   DRIVER
+}
+
+// Modèle DriverProfile (profil spécifique aux chauffeurs)
+model DriverProfile {
+  id     String @id @default(uuid())
+  user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  // Photo de profil
+  image   Image?  @relation(fields: [imageId], references: [id])
+  imageId String? @unique
+
+  // Relation vers le permis
+  license   DriverLicense? @relation(fields: [licenseId], references: [id])
+  licenseId String?        @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Modèle Permis (informations du permis)
+model DriverLicense {
+  id                String   @id @default(uuid())
+  licenseNumber     String
+  licenseType       String
+  licenseExpiration DateTime
+
+  // Photos du permis
+  photoFront String?
+  photoBack  String?
+
+  status DriverStatus @default(PENDING)
+
+  driverProfile DriverProfile?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+enum DriverStatus {
+  PENDING // Attente validation admin
+  APPROVED // Compte validé
+  DECLINED // Refusé
 }
 
 // Modèle Children
@@ -74,9 +117,10 @@ model School {
 
 // Modèle Image
 model Image {
-  id    String    @id @default(uuid())
-  url   String
-  child Children?
+  id     String         @id @default(uuid())
+  url    String
+  child  Children?
+  driver DriverProfile?
 }
 
 // Modèle Subscription
