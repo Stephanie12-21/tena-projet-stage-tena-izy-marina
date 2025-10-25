@@ -77,3 +77,18 @@ export interface User {
   role: string;
   createdAt: string;
 }
+
+export interface DriverData {
+  nom: string;
+  prenom: string;
+  email: string;
+  phone: string;
+  password: string;
+
+  profilePhotoUrl?: string;
+  licenseNumber: string;
+  licenseType: "A" | "B" | "C" | "D" | "E";
+  licenseExpiration: string; // ISO string
+  licenseFrontUrl?: string;
+  licenseBackUrl?: string;
+}

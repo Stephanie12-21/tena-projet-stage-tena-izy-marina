@@ -189,6 +189,130 @@ export async function signUpAsParent(formData: FormData) {
   }
 }
 
+export async function signUpAsDriver(formData: FormData) {
+  console.log("=== Début de la fonction signUpAsDriver ===");
+
+  const supabase = createClient();
+  console.log("Client Supabase serveur créé");
+
+  // Extraction des données du formulaire
+  const userData = {
+    nom: (formData.get("nom") as string)?.trim(),
+    prenom: (formData.get("prenom") as string)?.trim(),
+    email: (formData.get("email") as string)?.trim(),
+    phone: (formData.get("phone") as string)?.trim(),
+    password: (formData.get("password") as string)?.trim(),
+    profilePhotoUrl: (formData.get("profilePhotoUrl") as string)?.trim(),
+    licenseNumber: (formData.get("licenseNumber") as string)?.trim(),
+    licenseType: (formData.get("licenseType") as string)?.trim() as
+      | "A"
+      | "B"
+      | "C"
+      | "D"
+      | "E",
+    licenseExpiration: (formData.get("licenseExpiration") as string)?.trim(),
+    licenseFrontUrl: (formData.get("licenseFrontUrl") as string)?.trim(),
+    licenseBackUrl: (formData.get("licenseBackUrl") as string)?.trim(),
+  };
+  console.log("Données utilisateur reçues :", userData);
+
+  // Vérification des champs obligatoires
+  const requiredFields = [
+    userData.nom,
+    userData.prenom,
+    userData.email,
+    userData.phone,
+    userData.password,
+    userData.licenseNumber,
+    userData.licenseType,
+    userData.licenseExpiration,
+  ];
+  if (requiredFields.some((f) => !f)) {
+    console.warn("Champs manquants :", userData);
+    return {
+      status: "Tous les champs obligatoires doivent être remplis.",
+      user: null,
+    };
+  }
+
+  // Création du compte Supabase
+  console.log("Tentative de création du compte Supabase...");
+  const { data, error } = await (await supabase).auth.signUp({
+    email: userData.email,
+    password: userData.password,
+    options: {
+      data: {
+        role: "DRIVER",
+        nom: userData.nom,
+        prenom: userData.prenom,
+        phone: userData.phone,
+      },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`,
+    },
+  });
+  console.log("Résultat signUp Supabase :", { data, error });
+
+  if (error) {
+    console.error("Erreur Supabase :", error.message);
+    return { status: `Erreur Supabase : ${error.message}`, user: null };
+  }
+
+  if (!data.user) {
+    console.warn("⚠️ Utilisateur Supabase non créé");
+    return {
+      status: "Impossible de créer l'utilisateur Supabase.",
+      user: null,
+    };
+  }
+
+  const userId = data.user.id;
+  console.log("Nouvel utilisateur Supabase créé avec ID :", userId);
+
+  // Insertion dans Prisma avec profil chauffeur et permis
+  try {
+    console.log("Tentative d'enregistrement Prisma...");
+    const user = await prisma.users.create({
+      data: {
+        id: userId,
+        nom: userData.nom,
+        prenom: userData.prenom,
+        email: userData.email,
+        phone: userData.phone,
+        role: "DRIVER",
+        driverProfile: {
+          create: {
+            image: userData.profilePhotoUrl
+              ? { create: { url: userData.profilePhotoUrl } }
+              : undefined,
+            license: {
+              create: {
+                licenseNumber: userData.licenseNumber,
+                licenseType: userData.licenseType,
+                licenseExpiration: new Date(userData.licenseExpiration),
+                photoFront: userData.licenseFrontUrl,
+                photoBack: userData.licenseBackUrl,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    console.log("Utilisateur enregistré dans Prisma :", user);
+    await revalidatePath("/", "layout");
+    console.log("Revalidation du cache Next terminée.");
+
+    return { status: "success", user };
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+    console.error("Erreur Prisma :", errorMsg);
+    return {
+      status: `Erreur lors de l'enregistrement Prisma : ${errorMsg}`,
+      user: null,
+    };
+  }
+}
+
 //pourla connexion au compte
 export async function signIn(formData: FormData) {
   const supabase = await createClient();

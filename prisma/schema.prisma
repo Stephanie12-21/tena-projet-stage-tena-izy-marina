@@ -55,26 +55,26 @@ model DriverProfile {
 
 // Modèle Permis (informations du permis)
 model DriverLicense {
-  id                String   @id @default(uuid())
+  id                String      @id @default(uuid())
   licenseNumber     String
-  licenseType       String
+  licenseType       LicenseType
   licenseExpiration DateTime
 
   // Photos du permis
   photoFront String?
   photoBack  String?
 
-  status DriverStatus @default(PENDING)
-
   driverProfile DriverProfile?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
 
-enum DriverStatus {
-  PENDING // Attente validation admin
-  APPROVED // Compte validé
-  DECLINED // Refusé
+enum LicenseType {
+  A
+  B
+  C
+  D
+  E
 }
 
 // Modèle Children

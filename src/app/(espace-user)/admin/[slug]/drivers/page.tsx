@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function ChildrenPage() {
+export default function DriversPage() {
   const { dbUser, loading } = useAuth();
 
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function ChildrenPage() {
           </div>
 
           <Button
-            onClick={() => router.push("./admin/addnew")}
+            onClick={() => router.push("./drivers/addnew")}
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
