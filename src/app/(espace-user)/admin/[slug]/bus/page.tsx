@@ -68,6 +68,7 @@ export default function BusesPage() {
                 <th className="p-3">Places</th>
                 <th className="p-3">Statut</th>
                 <th className="p-3">Chauffeur</th>
+                <th className="p-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -81,6 +82,36 @@ export default function BusesPage() {
                     {bus.driver
                       ? `${bus.driver.nom} ${bus.driver.prenom}`
                       : "—"}
+                  </td>
+                  <td className="p-3 flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => router.push(`./bus/edit/${bus.id}`)}
+                    >
+                      Modifier
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={async () => {
+                        if (!confirm("Voulez-vous vraiment supprimer ce bus ?"))
+                          return;
+                        try {
+                          const res = await fetch(`/api/bus/${bus.id}`, {
+                            method: "DELETE",
+                          });
+                          if (!res.ok)
+                            throw new Error("Erreur lors de la suppression");
+                          setBuses(buses.filter((b) => b.id !== bus.id));
+                        } catch (error) {
+                          console.error(error);
+                          alert("Impossible de supprimer le bus.");
+                        }
+                      }}
+                    >
+                      Supprimer
+                    </Button>
                   </td>
                 </tr>
               ))}

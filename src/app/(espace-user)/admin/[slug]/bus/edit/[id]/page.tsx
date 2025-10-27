@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,40 +15,65 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { Driver } from "@/lib/types/user-interface";
-import { BusStatus } from "../../../../../../../generated/prisma";
-import { createBusAction } from "@/app/actions/bus";
 import { toast, ToastContainer } from "react-toastify";
+import { BusStatus } from "../../../../../../../../generated/prisma";
+import { updateBusAction } from "@/app/actions/bus";
+import { Bus, Driver } from "@/lib/types/user-interface";
 
-export default function AddBusForm() {
+export default function EditBusPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const busId = pathname?.split("/").pop(); // récupère l'ID depuis l'URL
+
+  const [bus, setBus] = useState<Bus | null>(null);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [driverId, setDriverId] = useState("");
   const [status, setStatus] = useState<BusStatus>(BusStatus.ACTIF);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchDrivers = async () => {
-      try {
-        const res = await fetch("/api/users?role=DRIVER");
-        if (!res.ok) throw new Error("Erreur API /api/users");
-        const data = await res.json();
-        setDrivers(data.drivers ?? []);
+    if (!busId) return;
 
-        if (data.drivers?.length) setDriverId(data.drivers[0].id);
+    const fetchBusAndDrivers = async () => {
+      try {
+        const [busRes, driversRes] = await Promise.all([
+          fetch(`/api/bus/${busId}`),
+          fetch("/api/users?role=DRIVER"),
+        ]);
+
+        if (!busRes.ok) throw new Error("Erreur API bus");
+        if (!driversRes.ok) throw new Error("Erreur API chauffeurs");
+
+        const busData = await busRes.json(); // busData est le bus lui-même
+        const driversData = await driversRes.json();
+
+        console.log("Bus fetché:", busData);
+        console.log("Drivers fetchés:", driversData);
+
+        setBus(busData); // <-- correction ici
+        setDrivers(driversData.drivers ?? []);
+        setDriverId(busData.driverId || driversData.drivers?.[0]?.id || "");
+        setStatus(busData.status || BusStatus.ACTIF);
       } catch (error) {
-        console.error("Erreur fetch drivers :", error);
+        console.error(error);
+        toast.error("Erreur lors du chargement du bus ou des chauffeurs");
+      } finally {
+        setLoading(false);
       }
     };
-    fetchDrivers();
-  }, []);
 
-  // 🔹 Soumission du formulaire
+    fetchBusAndDrivers();
+  }, [busId]);
+
+  if (loading) return <div>Chargement...</div>;
+  if (!bus) return <div>Bus introuvable</div>;
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const formData = new FormData(e.currentTarget);
 
     const busData = {
+      id: bus.id,
       matricule: formData.get("matricule") as string,
       brand: formData.get("brand") as string,
       seats: Number(formData.get("seats")),
@@ -56,13 +81,13 @@ export default function AddBusForm() {
       status,
     };
 
-    const res = await createBusAction(busData);
+    const res = await updateBusAction(busData);
 
     if (res?.success) {
-      toast.success("Bus ajouté avec succès ✅");
+      toast.success("Bus mis à jour avec succès");
       router.push("../bus");
     } else {
-      alert(res?.message || "Erreur lors de l'ajout du bus");
+      toast.error(res?.message || "Erreur lors de la mise à jour du bus");
     }
   };
 
@@ -70,23 +95,39 @@ export default function AddBusForm() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg shadow-lg">
         <CardHeader>
-          <CardTitle>Ajouter un Bus Scolaire </CardTitle>
+          <CardTitle>Modifier le Bus</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-3">
               <Label>Numéro de matricule</Label>
-              <Input name="matricule" type="text" required />
+              <Input
+                name="matricule"
+                type="text"
+                required
+                defaultValue={bus.matricule}
+              />
             </div>
 
             <div className="space-y-3">
               <Label>Marque du bus</Label>
-              <Input name="brand" type="text" required />
+              <Input
+                name="brand"
+                type="text"
+                required
+                defaultValue={bus.brand}
+              />
             </div>
 
             <div className="space-y-3">
               <Label>Nombre de places</Label>
-              <Input name="seats" type="number" min={10} required />
+              <Input
+                name="seats"
+                type="number"
+                min={10}
+                required
+                defaultValue={bus.seats}
+              />
             </div>
 
             <div className="space-y-3">
@@ -124,7 +165,7 @@ export default function AddBusForm() {
             </div>
 
             <Button type="submit" className="w-full">
-              Enregistrer le bus
+              Mettre à jour le bus
             </Button>
           </form>
         </CardContent>
@@ -135,10 +176,8 @@ export default function AddBusForm() {
           newestOnTop={false}
           closeOnClick
           pauseOnHover
-          toastStyle={{
-            width: "500px",
-          }}
-        />{" "}
+          toastStyle={{ width: "500px" }}
+        />
       </Card>
     </div>
   );

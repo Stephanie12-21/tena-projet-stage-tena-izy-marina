@@ -71,3 +71,44 @@ export async function createBusAction(data: {
     };
   }
 }
+
+interface UpdateBusInput {
+  id: string;
+  matricule: string;
+  brand: string;
+  seats: number;
+  driverId: string;
+  status: BusStatus;
+}
+
+export async function updateBusAction(data: UpdateBusInput) {
+  try {
+    // Vérifier que le bus existe
+    const existingBus = await prisma.bus.findUnique({
+      where: { id: data.id },
+    });
+
+    if (!existingBus) {
+      return { success: false, message: "Bus introuvable" };
+    }
+
+    // Mettre à jour le bus
+    const updatedBus = await prisma.bus.update({
+      where: { id: data.id },
+      data: {
+        matricule: data.matricule,
+        brand: data.brand,
+        seats: data.seats,
+        driverId: data.driverId,
+        status: data.status,
+      },
+    });
+
+    return { success: true, bus: updatedBus };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
+
+    console.error("Erreur updateBusAction:", error);
+    return { success: false, message };
+  }
+}
