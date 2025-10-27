@@ -112,3 +112,15 @@ export async function updateBusAction(data: UpdateBusInput) {
     return { success: false, message };
   }
 }
+
+export async function deleteBusAction(busId: string) {
+  try {
+    await prisma.bus.delete({
+      where: { id: busId },
+    });
+    return { success: true };
+  } catch (error) {
+    console.error("Erreur suppression bus:", error);
+    return { success: false, message: "Impossible de supprimer le bus." };
+  }
+}

@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Bus } from "@/lib/types/user-interface";
+import { deleteBusAction } from "@/app/actions/bus";
+import { toast, ToastContainer } from "react-toastify";
 
 export default function BusesPage() {
   const { dbUser, loading } = useAuth();
@@ -48,7 +50,20 @@ export default function BusesPage() {
       </div>
     );
   }
+  const handleDelete = async (busId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce bus ?")) return;
 
+    try {
+      // Appel de la Server Action
+      const res = await deleteBusAction(busId);
+      if (!res.success) throw new Error(res.message);
+      setBuses(buses.filter((b) => b.id !== busId));
+      toast.success("Bus supprimé avec succès !");
+    } catch (error) {
+      console.error(error);
+      toast.error("Impossible de supprimer le bus.");
+    }
+  };
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -94,21 +109,7 @@ export default function BusesPage() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={async () => {
-                        if (!confirm("Voulez-vous vraiment supprimer ce bus ?"))
-                          return;
-                        try {
-                          const res = await fetch(`/api/bus/${bus.id}`, {
-                            method: "DELETE",
-                          });
-                          if (!res.ok)
-                            throw new Error("Erreur lors de la suppression");
-                          setBuses(buses.filter((b) => b.id !== bus.id));
-                        } catch (error) {
-                          console.error(error);
-                          alert("Impossible de supprimer le bus.");
-                        }
-                      }}
+                      onClick={() => handleDelete(bus.id)}
                     >
                       Supprimer
                     </Button>
@@ -125,6 +126,15 @@ export default function BusesPage() {
             </tbody>
           </table>
         </div>
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnHover
+          toastStyle={{ width: "500px" }}
+        />
       </div>
     </div>
   );
