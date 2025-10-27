@@ -93,7 +93,7 @@ const LoginPage = () => {
             } else if (role === "PARENT") {
               router.push(`/parent/${data.slug}/`);
             } else if (role === "DRIVER") {
-              router.push(`/driver/${data.slug}/itineraire`);
+              router.push(`/driver/${data.slug}/`);
             } else {
               setError(
                 "Vous n'êtes pas autorisé à accéder à cet espace. Veuillez contacter l'administrateur."

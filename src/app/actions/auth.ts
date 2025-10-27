@@ -578,3 +578,108 @@ export async function updateParentPassword({
     return { success: false, message: `Erreur serveur: ${message}` };
   }
 }
+
+type UpdateDriverProfileInput = {
+  userId: string;
+  licenseNumber: string;
+  licenseType: "A" | "B" | "C" | "D" | "E";
+  licenseExpiration: string; // ISO date
+  profilePhotoUrl?: string;
+  licenseFrontUrl?: string;
+  licenseBackUrl?: string;
+};
+
+export async function updateDriverProfile(data: UpdateDriverProfileInput) {
+  try {
+    const {
+      userId,
+      licenseNumber,
+      licenseType,
+      licenseExpiration,
+      profilePhotoUrl,
+      licenseFrontUrl,
+      licenseBackUrl,
+    } = data;
+
+    if (!userId || !licenseNumber || !licenseType || !licenseExpiration) {
+      return { success: false, message: "Champs requis manquants" };
+    }
+
+    // Vérifier si le profil existe
+    const driverProfile = await prisma.driverProfile.findUnique({
+      where: { userId },
+      include: { license: true, image: true },
+    });
+
+    // 🔹 Gestion de la photo de profil
+    let profileImageId: string | null = driverProfile?.imageId || null;
+    if (profilePhotoUrl) {
+      if (profileImageId) {
+        // Mettre à jour l'image existante
+        await prisma.image.update({
+          where: { id: profileImageId },
+          data: { url: profilePhotoUrl },
+        });
+      } else {
+        // Créer une nouvelle image
+        const newImage = await prisma.image.create({
+          data: { url: profilePhotoUrl },
+        });
+        profileImageId = newImage.id;
+      }
+    }
+
+    // 🔹 Gestion du permis
+    let licenseId: string | null = driverProfile?.licenseId || null;
+    if (driverProfile?.license) {
+      // Mettre à jour le permis existant
+      await prisma.driverLicense.update({
+        where: { id: driverProfile.license.id },
+        data: {
+          licenseNumber,
+          licenseType,
+          licenseExpiration: new Date(licenseExpiration),
+          photoFront: licenseFrontUrl ?? driverProfile.license.photoFront,
+          photoBack: licenseBackUrl ?? driverProfile.license.photoBack,
+        },
+      });
+    } else {
+      // Créer un nouveau permis
+      const newLicense = await prisma.driverLicense.create({
+        data: {
+          licenseNumber,
+          licenseType,
+          licenseExpiration: new Date(licenseExpiration),
+          photoFront: licenseFrontUrl,
+          photoBack: licenseBackUrl,
+        },
+      });
+      licenseId = newLicense.id;
+    }
+
+    // 🔹 Mettre à jour ou créer le driverProfile
+    if (driverProfile) {
+      await prisma.driverProfile.update({
+        where: { id: driverProfile.id },
+        data: {
+          licenseId,
+          imageId: profileImageId,
+        },
+      });
+    } else {
+      await prisma.driverProfile.create({
+        data: {
+          userId,
+          licenseId,
+          imageId: profileImageId,
+        },
+      });
+    }
+
+    return { success: true, message: "Profil chauffeur mis à jour ✅" };
+  } catch (error: unknown) {
+    console.error("Erreur updateDriverProfile:", error);
+    const message = error instanceof Error ? error.message : "Erreur serveur";
+    return { success: false, message };
+  }
+}
