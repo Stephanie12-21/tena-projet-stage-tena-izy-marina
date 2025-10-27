@@ -12,7 +12,7 @@ export default function InvitePage() {
   const [loading, setLoading] = useState(false);
 
   const handleInvite = async () => {
-    if (!email || !dbUser?.id) return; // s'assure qu'on a l'admin connecté
+    if (!email || !dbUser?.id) return;
     setLoading(true);
     setMessage("");
     setIsError(false);
@@ -23,7 +23,7 @@ export default function InvitePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          adminId: dbUser.id, // envoi l'ID de l'admin
+          adminId: dbUser.id,
         }),
       });
 

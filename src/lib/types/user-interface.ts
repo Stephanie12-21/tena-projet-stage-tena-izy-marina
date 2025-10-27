@@ -1,4 +1,10 @@
-import { Children, Image, School, Users } from "../../../generated/prisma";
+import {
+  BusStatus,
+  Children,
+  Image,
+  School,
+  Users,
+} from "../../../generated/prisma";
 
 export type SignUpFormData = Partial<Children> & {
   // Informations parent
@@ -77,18 +83,26 @@ export interface User {
   role: string;
   createdAt: string;
 }
-
-export interface DriverData {
+export type Driver = {
+  id: string;
   nom: string;
   prenom: string;
   email: string;
   phone: string;
-  password: string;
+  driverProfile?: {
+    license?: {
+      licenseNumber: string | null;
+      licenseType: string | null;
+      licenseExpiration: string | Date | null;
+    } | null;
+  } | null;
+};
 
-  profilePhotoUrl?: string;
-  licenseNumber: string;
-  licenseType: "A" | "B" | "C" | "D" | "E";
-  licenseExpiration: string; // ISO string
-  licenseFrontUrl?: string;
-  licenseBackUrl?: string;
+export interface Bus {
+  id: string;
+  matricule: string;
+  brand: string;
+  seats: number;
+  status: BusStatus;
+  driver: Driver | null;
 }

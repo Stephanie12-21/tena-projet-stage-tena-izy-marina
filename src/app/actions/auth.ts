@@ -237,7 +237,9 @@ export async function signUpAsDriver(formData: FormData) {
 
   // Création du compte Supabase
   console.log("Tentative de création du compte Supabase...");
-  const { data, error } = await (await supabase).auth.signUp({
+  const { data, error } = await (
+    await supabase
+  ).auth.signUp({
     email: userData.email,
     password: userData.password,
     options: {

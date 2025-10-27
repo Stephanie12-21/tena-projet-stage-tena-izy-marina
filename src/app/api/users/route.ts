@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// ✅ GET /api/users
 export async function GET() {
   try {
-    // Récupère tous les utilisateurs
+    // ✅ Récupération avec relations
     const allUsers = await prisma.users.findMany({
       select: {
         id: true,
@@ -14,20 +13,74 @@ export async function GET() {
         nom: true,
         prenom: true,
         createdAt: true,
+
+        // Relations Parents
+        children: {
+          select: {
+            id: true,
+            nom: true,
+            prenom: true,
+            adresse: true,
+            homeLat: true,
+            homeLong: true,
+            school: {
+              select: {
+                id: true,
+                nom: true,
+                adresse: true,
+                schoolLat: true,
+                schoolLong: true,
+              },
+            },
+            imageprofile: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+          },
+        },
+        subscriptions: {
+          select: {
+            id: true,
+            plan: true,
+            status: true,
+            stripeSubId: true,
+            createdAt: true,
+          },
+        },
+
+        // Relations Driver
+        driverProfile: {
+          select: {
+            id: true,
+            image: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+            license: {
+              select: {
+                id: true,
+                licenseNumber: true,
+                licenseType: true,
+                licenseExpiration: true,
+                photoFront: true,
+                photoBack: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    // Classe les utilisateurs selon leur rôle
-    const adminUsers = allUsers.filter((u) => u.role === "ADMIN");
-    const parentUsers = allUsers.filter((u) => u.role === "PARENT");
-    const driverUsers = allUsers.filter((u) => u.role === "DRIVER");
-
-    // Renvoie les résultats groupés
+    // ✅ Groupement par rôle
     return NextResponse.json({
       total: allUsers.length,
-      admins: adminUsers,
-      parents: parentUsers,
-      drivers: driverUsers,
+      admins: allUsers.filter((u) => u.role === "ADMIN"),
+      parents: allUsers.filter((u) => u.role === "PARENT"),
+      drivers: allUsers.filter((u) => u.role === "DRIVER"),
     });
   } catch (error) {
     console.error("Erreur lors de la récupération des utilisateurs :", error);

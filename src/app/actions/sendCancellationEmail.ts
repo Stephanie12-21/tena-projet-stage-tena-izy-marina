@@ -8,7 +8,7 @@ export async function sendCancellationEmail(to: string, childNames: string[]) {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT),
-    secure: Number(process.env.SMTP_PORT) === 465, // true si 465
+    secure: Number(process.env.SMTP_PORT) === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASSWORD,
@@ -21,19 +21,19 @@ export async function sendCancellationEmail(to: string, childNames: string[]) {
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; color: #333;">
-      <h2 style="color: #d9534f;">⚠️ Votre abonnement sera résilié à la fin de la période en cours</h2>
+      <h2 style="color: #d9534f;"> Votre abonnement sera résilié à la fin de la période en cours</h2>
       <p>Les enfants concernés :</p>
       ${childrenList}
-      <p>Merci pour votre confiance 🙏</p>
+      <p>Merci pour votre confiance </p>
     </div>
   `;
 
   await transporter.sendMail({
     from: process.env.EMAIL_FROM,
     to,
-    subject: "⚠️ Confirmation de résiliation d'abonnement UnivPass",
+    subject: " Confirmation de résiliation d'abonnement UnivPass",
     html: htmlContent,
   });
 
-  console.log(`✅ Email de résiliation envoyé à ${to}`);
+  console.log(` Email de résiliation envoyé à ${to}`);
 }

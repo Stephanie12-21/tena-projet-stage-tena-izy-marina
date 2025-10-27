@@ -26,6 +26,7 @@ model Users {
   children      Children[] // Pour les parents
   subscriptions Subscription[] // Pour les parents
   driverProfile DriverProfile? // Pour les chauffeurs
+  buses         Bus[] // Buses assignées si DRIVER
 }
 
 // Enum des rôles
@@ -123,7 +124,7 @@ model Image {
   driver DriverProfile?
 }
 
-// Modèle Subscription
+//////////////////////////// Modèle Subscription////////////////////////////
 model Subscription {
   id          String  @id @default(cuid())
   stripeSubId String? @unique
@@ -146,4 +147,24 @@ model Subscription {
 enum Plan {
   MONTHLY
   YEARLY
+}
+
+// Nouveau modèle Bus
+model Bus {
+  id        String    @id @default(uuid())
+  matricule String    @unique
+  brand     String
+  seats     Int
+  status    BusStatus @default(ACTIF)
+  driver    Users     @relation(fields: [driverId], references: [id])
+  driverId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Enum pour le statut du bus
+enum BusStatus {
+  ACTIF
+  MAINTENANCE
 }
