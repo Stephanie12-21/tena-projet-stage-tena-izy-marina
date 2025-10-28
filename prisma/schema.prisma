@@ -1,3 +1,173 @@
+// // Générateur Prisma Client
+// generator client {
+//   provider = "prisma-client-js"
+//   output   = "../generated/prisma"
+// }
+
+// // Source de données PostgreSQL
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
+
+// // Modèle User
+// model Users {
+//   id        String   @id @default(uuid())
+//   nom       String
+//   prenom    String
+//   email     String   @unique
+//   phone     String   @unique
+//   role      Role     @default(PARENT)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   // Relations
+//   children      Children[] // Pour les parents
+//   subscriptions Subscription[] // Pour les parents
+//   driverProfile DriverProfile? // Pour les chauffeurs
+//   buses         Bus[] // Buses assignées si DRIVER
+// }
+
+// // Enum des rôles
+// enum Role {
+//   PARENT
+//   ADMIN
+//   DRIVER
+// }
+
+// // Modèle DriverProfile (profil spécifique aux chauffeurs)
+// model DriverProfile {
+//   id     String @id @default(uuid())
+//   user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   userId String @unique
+
+//   // Photo de profil
+//   image   Image?  @relation(fields: [imageId], references: [id])
+//   imageId String? @unique
+
+//   // Relation vers le permis
+//   license   DriverLicense? @relation(fields: [licenseId], references: [id])
+//   licenseId String?        @unique
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+
+// // Modèle Permis (informations du permis)
+// model DriverLicense {
+//   id                String      @id @default(uuid())
+//   licenseNumber     String
+//   licenseType       LicenseType
+//   licenseExpiration DateTime
+
+//   // Photos du permis
+//   photoFront String?
+//   photoBack  String?
+
+//   driverProfile DriverProfile?
+//   createdAt     DateTime       @default(now())
+//   updatedAt     DateTime       @updatedAt
+// }
+
+// enum LicenseType {
+//   A
+//   B
+//   C
+//   D
+//   E
+// }
+
+// // Modèle Children
+// model Children {
+//   id       String @id @default(uuid())
+//   nom      String
+//   prenom   String
+//   adresse  String
+//   homeLat  Float
+//   homeLong Float
+
+//   // École
+//   school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+//   schoolId String
+
+//   // Image de profil
+//   imageprofile   Image  @relation(fields: [imageprofileId], references: [id])
+//   imageprofileId String @unique
+
+//   // Parent
+//   parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+//   parentId String
+
+//   // Abonnement (facultatif)
+//   subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+//   subscriptionId String?
+// }
+
+// // Modèle School
+// model School {
+//   id         String @id @default(uuid())
+//   nom        String
+//   adresse    String
+//   schoolLat  Float
+//   schoolLong Float
+
+//   // Relation inverse
+//   children Children[]
+// }
+
+// // Modèle Image
+// model Image {
+//   id     String         @id @default(uuid())
+//   url    String
+//   child  Children?
+//   driver DriverProfile?
+// }
+
+// //////////////////////////// Modèle Subscription////////////////////////////
+// model Subscription {
+//   id          String  @id @default(cuid())
+//   stripeSubId String? @unique
+//   plan        Plan
+//   status      String
+//   emailSent   Boolean @default(false)
+
+//   cancelAtPeriodEnd Boolean  @default(false)
+//   createdAt         DateTime @default(now())
+
+//   // Lien vers le parent
+//   parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+//   parentId String
+
+//   // Enfants concernés par cet abonnement
+//   children Children[]
+// }
+
+// // Enum du plan
+// enum Plan {
+//   MONTHLY
+//   YEARLY
+// }
+
+// // Nouveau modèle Bus
+// model Bus {
+//   id        String    @id @default(uuid())
+//   matricule String    @unique
+//   brand     String
+//   seats     Int
+//   status    BusStatus @default(ACTIF)
+//   driver    Users     @relation(fields: [driverId], references: [id])
+//   driverId  String
+
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+
+// // Enum pour le statut du bus
+// enum BusStatus {
+//   ACTIF
+//   MAINTENANCE
+// }
 // Générateur Prisma Client
 generator client {
   provider = "prisma-client-js"
@@ -11,7 +181,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Modèle User
+// ------------------- USERS -------------------
 model Users {
   id        String   @id @default(uuid())
   nom       String
@@ -36,7 +206,7 @@ enum Role {
   DRIVER
 }
 
-// Modèle DriverProfile (profil spécifique aux chauffeurs)
+// ------------------- DRIVER PROFILE -------------------
 model DriverProfile {
   id     String @id @default(uuid())
   user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -54,7 +224,7 @@ model DriverProfile {
   updatedAt DateTime @updatedAt
 }
 
-// Modèle Permis (informations du permis)
+// ------------------- DRIVER LICENSE -------------------
 model DriverLicense {
   id                String      @id @default(uuid())
   licenseNumber     String
@@ -78,7 +248,7 @@ enum LicenseType {
   E
 }
 
-// Modèle Children
+// ------------------- CHILDREN -------------------
 model Children {
   id       String @id @default(uuid())
   nom      String
@@ -88,7 +258,7 @@ model Children {
   homeLong Float
 
   // École
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   schoolId String
 
   // Image de profil
@@ -96,15 +266,22 @@ model Children {
   imageprofileId String @unique
 
   // Parent
-  parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade)
   parentId String
 
   // Abonnement (facultatif)
   subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
   subscriptionId String?
+
+  // Bus assigné
+  bus   Bus?    @relation(fields: [busId], references: [id])
+  busId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-// Modèle School
+// ------------------- SCHOOL -------------------
 model School {
   id         String @id @default(uuid())
   nom        String
@@ -116,15 +293,15 @@ model School {
   children Children[]
 }
 
-// Modèle Image
+// ------------------- IMAGE -------------------
 model Image {
   id     String         @id @default(uuid())
   url    String
-  child  Children?
-  driver DriverProfile?
+  child  Children?      @relation
+  driver DriverProfile? @relation
 }
 
-//////////////////////////// Modèle Subscription////////////////////////////
+// ------------------- SUBSCRIPTION -------------------
 model Subscription {
   id          String  @id @default(cuid())
   stripeSubId String? @unique
@@ -139,31 +316,34 @@ model Subscription {
   parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade)
   parentId String
 
-  // Enfants concernés par cet abonnement
+  // Enfants concernés
   children Children[]
 }
 
-// Enum du plan
 enum Plan {
   MONTHLY
   YEARLY
 }
 
-// Nouveau modèle Bus
+// ------------------- BUS -------------------
 model Bus {
   id        String    @id @default(uuid())
   matricule String    @unique
   brand     String
   seats     Int
   status    BusStatus @default(ACTIF)
-  driver    Users     @relation(fields: [driverId], references: [id])
-  driverId  String
+
+  // Chauffeur du bus
+  driver   Users  @relation(fields: [driverId], references: [id])
+  driverId String
+
+  // Enfants assignés à ce bus
+  children Children[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-// Enum pour le statut du bus
 enum BusStatus {
   ACTIF
   MAINTENANCE

@@ -1,29 +1,75 @@
-import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+"use client";
+
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Home, School } from "lucide-react";
-import { use } from "react";
+import { useAuth } from "@/app/context/provider";
+import { useEffect, useState } from "react";
+import { useSearchParams, useParams } from "next/navigation";
+import { verifyQrToken } from "@/app/actions/verifyQrToken";
+import { checkChildAccess } from "@/app/actions/checkChildAccess";
+import { ChildWithRelations } from "@/lib/types/user-interface";
 
-interface ChildPageProps {
-  params: Promise<{ id: string }>;
-}
+export default function ChildPage() {
+  const { dbUser, loading } = useAuth();
+  const searchParams = useSearchParams();
+  const params = useParams();
 
-export default function ChildPage({ params }: ChildPageProps) {
-  const { id } = use(params);
+  const [child, setChild] = useState<ChildWithRelations | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [loadingChild, setLoadingChild] = useState(true);
 
-  const child = use(
-    prisma.children.findUnique({
-      where: { id },
-      include: {
-        parent: true,
-        school: true,
-        imageprofile: true,
-      },
-    })
-  );
+  const token = searchParams.get("token");
+  const childId = params?.id;
 
-  if (!child) return notFound();
+  useEffect(() => {
+    if (loading || !childId) return;
+
+    const verifyAccessAndSetChild = async () => {
+      let accessGranted = false;
+      let childData: ChildWithRelations | undefined;
+
+      // ✅ Vérification QR token
+      if (token) {
+        try {
+          const tokenChildId = await verifyQrToken(token);
+          if (tokenChildId === childId) accessGranted = true;
+        } catch (err) {
+          console.error("Error verifying QR token:", err);
+        }
+      }
+
+      // ✅ Vérification via checkChildAccess si token non valide
+      if (!accessGranted && dbUser) {
+        try {
+          const result = await checkChildAccess(dbUser.id, String(childId));
+          accessGranted = result.allowed;
+          childData = result.child;
+        } catch (err) {
+          console.error("Error in checkChildAccess:", err);
+        }
+      }
+
+      setHasAccess(accessGranted);
+
+      if (accessGranted && childData) {
+        setChild(childData);
+      }
+
+      setLoadingChild(false);
+    };
+
+    verifyAccessAndSetChild();
+  }, [loading, dbUser, childId, token]);
+
+  if (loading || loadingChild) return <p>Chargement...</p>;
+
+  // Non connecté ou pas autorisé
+  if (!dbUser || !hasAccess)
+    return <p>Accès refusé – Vous n’êtes pas autorisé à voir cette page</p>;
+
+  // Enfant introuvable (après validation)
+  if (!child) return <p>Enfant introuvable</p>;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
@@ -55,9 +101,9 @@ export default function ChildPage({ params }: ChildPageProps) {
             <h2 className="font-semibold flex items-center gap-2 mb-1">
               <School className="w-4 h-4" /> École
             </h2>
-            <p>{child.school.nom}</p>
+            <p>{child.school?.nom || "École inconnue"}</p>
             <p className="text-muted-foreground text-sm">
-              {child.school.adresse}
+              {child.school?.adresse || "Adresse inconnue"}
             </p>
           </div>
 
@@ -66,10 +112,10 @@ export default function ChildPage({ params }: ChildPageProps) {
               <Home className="w-4 h-4" /> Parent
             </h2>
             <p>
-              {child.parent.prenom} {child.parent.nom}
+              {child.parent?.prenom || ""} {child.parent?.nom || ""}
             </p>
-            <p>Email : {child.parent.email}</p>
-            <p>Téléphone : {child.parent.phone}</p>
+            <p>Email : {child.parent?.email || "N/A"}</p>
+            <p>Téléphone : {child.parent?.phone || "N/A"}</p>
           </div>
         </div>
       </Card>

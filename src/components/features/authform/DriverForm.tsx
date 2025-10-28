@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, ChangeEvent, FormEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ interface Photos {
 export default function DriverForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-
+  const router = useRouter();
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
   const [error, setError] = useState<string>("");
   const [step, setStep] = useState<number>(1);
@@ -171,6 +171,7 @@ export default function DriverForm() {
 
       if (result.status === "success") {
         alert("✅ Chauffeur créé avec succès !");
+        router.push("/login");
         console.log("Utilisateur créé :", result.user);
       } else {
         alert("❌ " + result.status);
