@@ -6,7 +6,7 @@ import { Home, School } from "lucide-react";
 import { use } from "react";
 
 interface ChildPageProps {
-  params: Promise<{ id: string }>; 
+  params: Promise<{ id: string }>;
 }
 
 export default function ChildPage({ params }: ChildPageProps) {

@@ -26,7 +26,7 @@ export async function GET(
     }
 
     // ✅ Crée une URL vers la page publique de l’enfant
-    const childUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/children/${child.id}`;
+    const childUrl = `${process.env.NEXT_PUBLIC_SITE_URL_PHONE}/children/${child.id}`;
 
     // Génère le QR code à partir de cette URL
     const qrCode = await QRCode.toDataURL(childUrl, {
