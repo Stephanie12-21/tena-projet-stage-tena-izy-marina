@@ -113,6 +113,12 @@ export default function BusesPage() {
                     >
                       Supprimer
                     </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => router.push(`./bus/assign/${bus.id}`)}
+                    >
+                      Affecter élèves
+                    </Button>
                   </td>
                 </tr>
               ))}
