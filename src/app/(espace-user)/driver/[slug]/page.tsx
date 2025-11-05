@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/app/context/provider";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,36 @@ const MainPageAsdriver = () => {
   const { user, dbUser, loading } = useAuth();
   const router = useRouter();
 
+  const [position, setPosition] = useState<{ lat: number; lon: number } | null>(
+    null
+  );
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setError("La géolocalisation n’est pas supportée par votre navigateur.");
+      return;
+    }
+
+    // 🔹 Suivi en temps réel
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setPosition({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+      },
+      (err) => {
+        setError(err.message);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000, // 10 secondes
+        timeout: 5000,
+      }
+    );
+
+    // 🔹 Nettoyage au démontage du composant
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
   if (loading) return <div>Chargement...</div>;
   if (!user) return <div>Vous n’êtes pas connecté.</div>;
 
@@ -18,13 +48,11 @@ const MainPageAsdriver = () => {
     .toLowerCase()
     .replace(/\s+/g, "-");
 
-  // 🔹 Fonction de navigation dynamique
   const goTo = (path: string) => {
     if (!slug) return;
     router.push(`/driver/${slug}/${path}`);
   };
 
-  // 🔹 Déconnexion via server action
   const handleSignOut = async () => {
     await signOut();
     router.push("/login");
@@ -48,6 +76,16 @@ const MainPageAsdriver = () => {
           <p>
             <strong>Rôle :</strong> {dbUser?.role}
           </p>
+
+          {/* 🔹 Affichage de la position en temps réel */}
+          {position ? (
+            <p>
+              <strong>Position actuelle :</strong> {position.lat.toFixed(6)},{" "}
+              {position.lon.toFixed(6)}
+            </p>
+          ) : (
+            <p>{error || "Récupération de la position..."}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -66,13 +104,18 @@ const MainPageAsdriver = () => {
           </Button>
 
           <Button
+            onClick={() => goTo("logs-presence")}
+            className="w-full py-6 text-lg"
+          >
+            Les logs de présence
+          </Button>
+          <Button
             onClick={() => goTo("profil")}
             className="w-full py-6 text-lg"
           >
             Profil utilisateur
           </Button>
 
-          {/* 🔹 Bouton de déconnexion */}
           <Button
             onClick={handleSignOut}
             className="w-full py-6 text-lg bg-red-100 hover:bg-red-200 text-red-700"

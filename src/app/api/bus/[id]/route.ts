@@ -23,3 +23,48 @@ export async function GET(
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const { busId, childrenIds } = await req.json();
+
+    if (!busId || !childrenIds || !Array.isArray(childrenIds)) {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    }
+
+    // Vérifier le bus
+    const bus = await prisma.bus.findUnique({
+      where: { id: busId },
+      include: { children: true },
+    });
+
+    if (!bus)
+      return NextResponse.json({ error: "Bus non trouvé" }, { status: 404 });
+
+    const availableSeats = bus.seats - bus.children.length;
+
+    if (childrenIds.length > availableSeats) {
+      return NextResponse.json(
+        { error: "Pas assez de places disponibles" },
+        { status: 400 }
+      );
+    }
+
+    // Assignation des enfants
+    await prisma.children.updateMany({
+      where: { id: { in: childrenIds } },
+      data: { busId: bus.id },
+    });
+
+    // Optionnel : mettre à jour un champ availableSeats dans le bus
+    await prisma.bus.update({
+      where: { id: bus.id },
+      data: { seats: availableSeats - childrenIds.length },
+    });
+
+    return NextResponse.json({ success: true, assigned: childrenIds.length });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

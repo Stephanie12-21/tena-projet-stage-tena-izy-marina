@@ -1,114 +1,57 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-
-interface Child {
-  id: string;
-  nom: string;
-  prenom: string;
+import AssignChildrenForm from "@/components/features/AssignChildrenForm";
+import { prisma } from "@/lib/prisma";
+import { notFound } from "next/navigation";
+import { Bus, ChildWithRelations } from "@/lib/types/user-interface";
+interface BusPageProps {
+  params: { busId: string };
 }
 
-interface SchoolWithChildren {
-  id: string;
-  nom: string;
-  schoolLat: number;
-  schoolLong: number;
-  children: Child[];
-}
+export default async function BusAssignPage({ params }: BusPageProps) {
+  // 🔹 Inclure toutes les relations pour children
+  const busRaw = await prisma.bus.findUnique({
+    where: { id: params.busId },
+    include: {
+      driver: true,
+      children: {
+        include: {
+          school: true,
+          imageprofile: true,
+          parent: true,
+        },
+      },
+    },
+  });
 
-export default function AssignChildrenPage() {
-  const params = useParams();
-  const busId = params?.busId as string;
-  const router = useRouter();
+  if (!busRaw) return notFound();
 
-  const [schools, setSchools] = useState<SchoolWithChildren[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [assigning, setAssigning] = useState(false);
+  // Prisma renvoie déjà toutes les relations, donc on peut caster
+  const assignedChildren = busRaw.children as ChildWithRelations[];
 
-  useEffect(() => {
-    const fetchSchools = async () => {
-      try {
-        const res = await fetch("/api/children/group-by-school");
-        if (!res.ok) throw new Error("Erreur lors du chargement des écoles");
+  // Récupérer les enfants sans bus, avec relations
+  const childrenWithoutBus = (await prisma.children.findMany({
+    where: { busId: null },
+    include: { school: true, imageprofile: true, parent: true },
+  })) as ChildWithRelations[];
 
-        const data: SchoolWithChildren[] = await res.json();
-        setSchools(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSchools();
-  }, []);
-
-  const handleAssignSchool = async (schoolId: string) => {
-    setAssigning(true);
-    try {
-      const res = await fetch("/api/bus/assign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ busId, schoolId }),
-      });
-
-      if (!res.ok) throw new Error("Erreur lors de l'affectation");
-
-      alert("Tous les enfants de l'école ont été affectés !");
-      // Optionnel : retirer cette école de la liste
-      setSchools((prev) => prev.filter((s) => s.id !== schoolId));
-    } catch (error) {
-      console.error(error);
-      alert("Erreur lors de l'affectation");
-    } finally {
-      setAssigning(false);
-    }
+  // Construire le bus avec children correctement typés
+  const bus: Bus & { children: ChildWithRelations[] } = {
+    id: busRaw.id,
+    matricule: busRaw.matricule,
+    brand: busRaw.brand,
+    seats: busRaw.seats,
+    status: busRaw.status,
+    driver: busRaw.driver,
+    children: assignedChildren,
   };
-
-  if (loading) return <p className="p-6">Chargement...</p>;
 
   return (
     <div className="p-6">
-      <Button onClick={() => router.back()}>⬅ Retour</Button>
-      <h1 className="text-2xl font-bold mt-4">Affecter des élèves au bus</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        Assignation enfants au bus {bus.matricule} (
+        {bus.seats - bus.children.length} places disponibles)
+      </h1>
 
-      {schools.length === 0 ? (
-        <p className="mt-4 text-gray-500">
-          Aucune école avec des enfants disponibles.
-        </p>
-      ) : (
-        <ul className="mt-4 space-y-4">
-          {schools.map((school) => (
-            <Card key={school.id} className="p-4">
-              <p>
-                <strong>École :</strong> {school.nom}
-              </p>
-              <p>
-                <strong>Enfants disponibles :</strong> {school.children.length}
-              </p>
-              <ul className="mt-2 ml-4 list-disc">
-                {school.children.map((child) => (
-                  <li key={child.id}>
-                    {child.nom} {child.prenom}
-                  </li>
-                ))}
-              </ul>
-              <Button
-                className="mt-4"
-                onClick={() => handleAssignSchool(school.id)}
-                disabled={assigning}
-              >
-                {assigning
-                  ? "Affectation en cours..."
-                  : "✅ Affecter tous les enfants au bus"}
-              </Button>
-            </Card>
-          ))}
-        </ul>
-      )}
+      <AssignChildrenForm bus={bus} busChildren={childrenWithoutBus} />
     </div>
   );
 }

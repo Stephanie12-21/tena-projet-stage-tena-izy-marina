@@ -4,9 +4,9 @@ import { useAuth } from "@/app/context/provider";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Bus } from "@/lib/types/user-interface";
+import { Bus, ChildWithRelations } from "@/lib/types/user-interface";
 import { deleteBusAction } from "@/app/actions/bus";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -15,6 +15,11 @@ export default function BusesPage() {
   const router = useRouter();
 
   const [buses, setBuses] = useState<Bus[]>([]);
+  const [selectedBusChildren, setSelectedBusChildren] = useState<
+    ChildWithRelations[]
+  >([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalBusName, setModalBusName] = useState("");
 
   useEffect(() => {
     const fetchBuses = async () => {
@@ -22,16 +27,40 @@ export default function BusesPage() {
         const res = await fetch("/api/bus");
         if (!res.ok) throw new Error("Erreur API /api/bus");
         const data = await res.json();
-        console.log("Réponse /api/bus :", data);
-
-        const busesData = Array.isArray(data.buses) ? data.buses : data;
-        setBuses(busesData ?? []);
+        setBuses(Array.isArray(data.buses) ? data.buses : data);
       } catch (error) {
         console.error("Erreur fetch buses :", error);
       }
     };
     fetchBuses();
   }, []);
+
+  const handleDelete = async (busId: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce bus ?")) return;
+    try {
+      const res = await deleteBusAction(busId);
+      if (!res.success) throw new Error(res.message);
+      setBuses(buses.filter((b) => b.id !== busId));
+      toast.success("Bus supprimé avec succès !");
+    } catch (error) {
+      console.error(error);
+      toast.error("Impossible de supprimer le bus.");
+    }
+  };
+
+  const handleViewPassengers = async (id: string, busName: string) => {
+    try {
+      const res = await fetch(`/api/bus/${id}/passengers`);
+      if (!res.ok) throw new Error("Erreur fetch enfants");
+      const data: ChildWithRelations[] = await res.json();
+      setSelectedBusChildren(data);
+      setModalBusName(busName);
+      setModalOpen(true);
+    } catch (error) {
+      console.error(error);
+      toast.error("Impossible de récupérer les passagers.");
+    }
+  };
 
   if (loading) {
     return (
@@ -50,20 +79,7 @@ export default function BusesPage() {
       </div>
     );
   }
-  const handleDelete = async (busId: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce bus ?")) return;
 
-    try {
-      // Appel de la Server Action
-      const res = await deleteBusAction(busId);
-      if (!res.success) throw new Error(res.message);
-      setBuses(buses.filter((b) => b.id !== busId));
-      toast.success("Bus supprimé avec succès !");
-    } catch (error) {
-      console.error(error);
-      toast.error("Impossible de supprimer le bus.");
-    }
-  };
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -80,7 +96,7 @@ export default function BusesPage() {
               <tr>
                 <th className="p-3">Matricule</th>
                 <th className="p-3">Marque</th>
-                <th className="p-3">Places</th>
+                <th className="p-3">Places disponibles</th>
                 <th className="p-3">Statut</th>
                 <th className="p-3">Chauffeur</th>
                 <th className="p-3">Actions</th>
@@ -119,12 +135,21 @@ export default function BusesPage() {
                     >
                       Affecter élèves
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() =>
+                        handleViewPassengers(bus.id, bus.matricule)
+                      }
+                    >
+                      Voir les passagers
+                    </Button>
                   </td>
                 </tr>
               ))}
               {buses.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center p-4 text-gray-500">
+                  <td colSpan={6} className="text-center p-4 text-gray-500">
                     Aucun bus trouvé.
                   </td>
                 </tr>
@@ -132,6 +157,44 @@ export default function BusesPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Modal pour passagers */}
+        {modalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full relative">
+              <button
+                className="absolute top-2 right-2"
+                onClick={() => setModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+              <h2 className="text-xl font-bold mb-4">
+                Passagers du bus {modalBusName}
+              </h2>
+              {selectedBusChildren.length === 0 ? (
+                <p>Aucun passager pour ce bus.</p>
+              ) : (
+                <ul className="space-y-2 max-h-64 overflow-y-auto">
+                  {selectedBusChildren.map((child) => (
+                    <li
+                      key={child.id}
+                      className="border p-2 rounded flex flex-col"
+                    >
+                      <span className="font-semibold">
+                        {child.prenom} {child.nom}
+                      </span>
+                      <span>Adresse : {child.adresse}</span>
+                      <span>
+                        École : {child.school.nom} - {child.school.adresse}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+
         <ToastContainer
           position="top-right"
           autoClose={5000}

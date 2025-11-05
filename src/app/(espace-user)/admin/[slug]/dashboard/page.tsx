@@ -83,7 +83,7 @@ const MainPageAsParent = () => {
           </Button>
 
           <Button
-            onClick={() => goTo("trajets")}
+            onClick={() => goTo("routes")}
             className="w-full py-6 text-lg"
           >
             Suivi du trajet
