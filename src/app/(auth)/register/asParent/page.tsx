@@ -161,6 +161,8 @@ export default function SignInPage() {
         homeLat: formData.homeLat ?? 0,
         homeLong: formData.homeLong ?? 0,
         parentId,
+        arrivalTime: formData.arrivalTime!,
+        departureTime: formData.departureTime!,
         schoolName: formData.schoolName!,
         schoolAddress: formData.schoolAddress!,
         schoolLat: formData.schoolLat!,

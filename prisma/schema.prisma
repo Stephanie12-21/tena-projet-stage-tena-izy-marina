@@ -87,6 +87,10 @@ model Children {
   homeLat  Float
   homeLong Float
 
+  //heures
+  arrivalTime   String
+  departureTime String
+
   // École
   school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   schoolId String

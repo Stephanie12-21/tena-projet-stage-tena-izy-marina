@@ -4,7 +4,12 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const children = await prisma.children.findMany({
-      where: { busId: null },
+      where: {
+        busId: null,
+        subscription: {
+          status: "active",
+        },
+      },
       include: {
         school: true,
         imageprofile: true,

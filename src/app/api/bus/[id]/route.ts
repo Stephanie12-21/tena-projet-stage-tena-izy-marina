@@ -12,11 +12,15 @@ export async function GET(
 
   try {
     const bus = await prisma.bus.findUnique({
-      where: { id: id },
+      where: { id },
       include: {
         driver: true,
       },
     });
+
+    if (!bus)
+      return NextResponse.json({ error: "Bus introuvable" }, { status: 404 });
+
     return NextResponse.json(bus);
   } catch (err) {
     console.error(err);

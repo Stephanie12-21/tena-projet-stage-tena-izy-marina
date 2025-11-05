@@ -9,7 +9,6 @@ export async function POST(req: Request) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as {
       email: string;
-      companyId: string;
     };
     return NextResponse.json(decoded);
   } catch {

@@ -229,6 +229,7 @@ export default function DriverForm() {
                 />
                 <Label>Email</Label>
                 <Input value={personalInfo.email} readOnly />
+
                 <Label>Téléphone</Label>
                 <Input
                   name="phone"

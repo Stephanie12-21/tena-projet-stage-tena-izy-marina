@@ -1,57 +1,80 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import AssignChildrenForm from "@/components/features/AssignChildrenForm";
-import { prisma } from "@/lib/prisma";
-import { notFound } from "next/navigation";
 import { Bus, ChildWithRelations } from "@/lib/types/user-interface";
-interface BusPageProps {
-  params: { busId: string };
-}
 
-export default async function BusAssignPage({ params }: BusPageProps) {
-  // 🔹 Inclure toutes les relations pour children
-  const busRaw = await prisma.bus.findUnique({
-    where: { id: params.busId },
-    include: {
-      driver: true,
-      children: {
-        include: {
-          school: true,
-          imageprofile: true,
-          parent: true,
-        },
-      },
-    },
-  });
+export default function BusAssignPage() {
+  const params = useParams();
+  const id = params.busId;
 
-  if (!busRaw) return notFound();
+  const [bus, setBus] = useState<
+    (Bus & { children: ChildWithRelations[] }) | null
+  >(null);
+  const [childrenWithoutBus, setChildrenWithoutBus] = useState<
+    ChildWithRelations[]
+  >([]);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Prisma renvoie déjà toutes les relations, donc on peut caster
-  const assignedChildren = busRaw.children as ChildWithRelations[];
+  useEffect(() => {
+    if (!id) return;
 
-  // Récupérer les enfants sans bus, avec relations
-  const childrenWithoutBus = (await prisma.children.findMany({
-    where: { busId: null },
-    include: { school: true, imageprofile: true, parent: true },
-  })) as ChildWithRelations[];
+    const fetchBusAndChildren = async () => {
+      setLoading(true);
+      try {
+        // 🔹 Bus
+        const busRes = await fetch(`/api/bus/${id}`, { cache: "no-store" });
+        if (!busRes.ok) throw new Error("Erreur API bus");
+        const busJson = await busRes.json();
+        setBus(busJson);
 
-  // Construire le bus avec children correctement typés
-  const bus: Bus & { children: ChildWithRelations[] } = {
-    id: busRaw.id,
-    matricule: busRaw.matricule,
-    brand: busRaw.brand,
-    seats: busRaw.seats,
-    status: busRaw.status,
-    driver: busRaw.driver,
-    children: assignedChildren,
-  };
+        // 🔹 Enfants avec abonnement actif et sans bus
+        const childrenRes = await fetch(`/api/children/available`, {
+          cache: "no-store",
+        });
+        if (!childrenRes.ok) throw new Error("Erreur API enfants disponibles");
+
+        const childrenJson = await childrenRes.json();
+        setChildrenWithoutBus(
+          Array.isArray(childrenJson.children) ? childrenJson.children : []
+        );
+        console.log("Enfants disponibles :", childrenJson.children);
+
+        console.log("Bus :", busJson);
+        console.log("Enfants disponibles :", childrenJson);
+      } catch (err) {
+        console.error(err);
+        setBus(null);
+        setChildrenWithoutBus([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBusAndChildren();
+  }, [id]);
+
+  if (loading) return <p>Chargement...</p>;
+  if (!bus) return <p>Bus introuvable.</p>;
+  console.log("Enfants disponibles pour le bus :", childrenWithoutBus);
+
+  const availableSeats =
+    bus.seats - (bus.children?.length ?? 0) - selected.length;
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">
-        Assignation enfants au bus {bus.matricule} (
-        {bus.seats - bus.children.length} places disponibles)
+        Assignation enfants au bus {bus.matricule} ({availableSeats} places
+        disponibles)
       </h1>
-
-      <AssignChildrenForm bus={bus} busChildren={childrenWithoutBus} />
+      <AssignChildrenForm
+        bus={bus}
+        busChildren={childrenWithoutBus}
+        selected={selected}
+        setSelected={setSelected}
+      />
     </div>
   );
 }

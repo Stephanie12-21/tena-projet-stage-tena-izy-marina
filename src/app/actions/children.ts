@@ -28,6 +28,8 @@ export async function createChild(data: ChildInput) {
       adresse: data.adresse,
       homeLat: data.homeLat,
       homeLong: data.homeLong,
+      arrivalTime: data.arrivalTime,
+      departureTime: data.departureTime,
       parent: { connect: { id: data.parentId } },
       imageprofile: {
         create: {

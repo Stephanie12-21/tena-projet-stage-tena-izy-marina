@@ -46,7 +46,7 @@ export default function InvitePage() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
+    <div className="min-h-screen flex justify-center bg-linear-to-br from-slate-50 to-blue-50 p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
@@ -110,9 +110,9 @@ export default function InvitePage() {
               }`}
             >
               {isError ? (
-                <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                <AlertCircle className="h-5 w-5 shrink-0" />
               ) : (
-                <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                <CheckCircle className="h-5 w-5 shrink-0" />
               )}
               <span className="text-sm font-medium">{message}</span>
             </div>

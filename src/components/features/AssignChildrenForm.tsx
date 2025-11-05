@@ -1,19 +1,21 @@
 "use client";
 
-import { ChildWithRelations } from "@/lib/types/user-interface";
-import { useState } from "react";
-import { Bus } from "@/lib/types/user-interface";
+import { ChildWithRelations, Bus } from "@/lib/types/user-interface";
 import { useRouter } from "next/navigation";
+
 interface AssignChildrenFormProps {
-  bus: Bus & { children?: ChildWithRelations[] }; // ⚡ ajout de children ici
-  busChildren: ChildWithRelations[]; // enfants à assigner
+  bus: Bus & { children?: ChildWithRelations[] };
+  busChildren: ChildWithRelations[];
+  selected: string[];
+  setSelected: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export default function AssignChildrenForm({
   bus,
   busChildren,
+  selected,
+  setSelected,
 }: AssignChildrenFormProps) {
-  const [selected, setSelected] = useState<string[]>([]);
   const router = useRouter();
 
   const toggleSelect = (id: string) => {
@@ -24,6 +26,8 @@ export default function AssignChildrenForm({
 
   const alreadyAssigned = bus.children?.length ?? 0;
   const availableSeats = bus.seats - alreadyAssigned - selected.length;
+
+  if (!Array.isArray(busChildren)) busChildren = []; // ✅ fallback
 
   const handleAssign = async () => {
     if (selected.length === 0) return alert("Sélectionnez au moins un enfant");
