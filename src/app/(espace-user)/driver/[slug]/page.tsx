@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/app/context/provider";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,48 +13,125 @@ function useDriverWebSocket(driverId: string | undefined) {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!driverId) return;
-
-    if (!navigator.geolocation) {
-      setError("La géolocalisation n’est pas supportée par votre navigateur.");
+    if (!driverId) {
+      setError("ID du chauffeur non disponible");
       return;
     }
 
-    const ws = new WebSocket("ws://localhost:3000/api/ws");
+    if (!navigator.geolocation) {
+      setError("La géolocalisation n'est pas supportée par votre navigateur.");
+      return;
+    }
 
-    ws.onopen = () => console.log("Connecté au WebSocket");
-    ws.onclose = () => console.log("Déconnecté du WebSocket");
-    ws.onerror = (err) => {
-      console.error("Erreur WebSocket :", err);
-      setError("Erreur WebSocket");
+    let watchId: number | null = null;
+    let isMounted = true;
+
+    const connectWebSocket = () => {
+      try {
+        // ✅ Connexion au serveur WebSocket séparé sur le port 3001
+        const ws = new WebSocket("ws://localhost:3001");
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          console.log("✅ Connecté au WebSocket");
+          setIsConnected(true);
+          setError(null);
+
+          // Démarrer le suivi de la géolocalisation
+          watchId = navigator.geolocation.watchPosition(
+            (pos) => {
+              const coords = {
+                driverId,
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                timestamp: new Date().toISOString(),
+                accuracy: pos.coords.accuracy,
+              };
+
+              setPosition({ lat: coords.lat, lon: coords.lon });
+
+              // Envoyer la position au serveur
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(coords));
+                console.log("📍 Position envoyée:", coords);
+              }
+            },
+            (err) => {
+              console.error("❌ Erreur géolocalisation:", err);
+              setError(`Erreur géolocalisation : ${err.message}`);
+            },
+            {
+              enableHighAccuracy: true,
+              maximumAge: 0,
+              timeout: 10000,
+            }
+          );
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            console.log("📨 Message reçu du serveur:", data);
+
+            if (data.type === "error") {
+              setError(data.message);
+            } else if (data.type === "location_confirmed") {
+              console.log("✅ Position confirmée par le serveur");
+            }
+          } catch (err) {
+            console.error("Erreur parsing message:", err);
+          }
+        };
+
+        ws.onclose = (event) => {
+          console.log(
+            `🔌 Déconnecté du WebSocket (code: ${event.code}, reason: ${event.reason})`
+          );
+          setIsConnected(false);
+          if (watchId !== null) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+          }
+          if (isMounted) {
+            reconnectTimeoutRef.current = setTimeout(() => {
+              console.log("🔄 Tentative de reconnexion...");
+              connectWebSocket();
+            }, 5000);
+          }
+        };
+      } catch (err) {
+        console.error("❌ Erreur lors de la création du WebSocket:", err);
+        setError("Impossible de se connecter au serveur");
+      }
     };
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const coords = {
-          driverId,
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        };
-        setPosition({ lat: coords.lat, lon: coords.lon });
+    // Démarrer la connexion
+    connectWebSocket();
 
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(coords));
-        }
-      },
-      (err) => setError(`Erreur géolocalisation : ${err.message}`),
-      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
-    );
-
+    // Nettoyage
     return () => {
-      navigator.geolocation.clearWatch(watchId);
-      ws.close();
+      isMounted = false;
+
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, [driverId]);
 
-  return { position, error };
+  return { position, error, isConnected };
 }
 
 // -------------------- Composant conducteur --------------------
@@ -62,11 +139,10 @@ const MainPageAsdriver = () => {
   const { user, dbUser, loading } = useAuth();
   const router = useRouter();
 
-  // 🔹 Hook WebSocket
-  const { position, error } = useDriverWebSocket(dbUser?.id);
+  const { position, error, isConnected } = useDriverWebSocket(dbUser?.id);
 
-  if (loading) return <div>Chargement...</div>;
-  if (!user) return <div>Vous n’êtes pas connecté.</div>;
+  if (loading) return <div className="p-6">Chargement...</div>;
+  if (!user) return <div className="p-6">Vous nêtes pas connecté.</div>;
 
   const slug = `${dbUser?.prenom}-${dbUser?.nom}`
     .toLowerCase()
@@ -101,14 +177,41 @@ const MainPageAsdriver = () => {
             <strong>Rôle :</strong> {dbUser?.role}
           </p>
 
-          {/* 🔹 Affichage position et erreur */}
-          {position ? (
-            <p>
-              <strong>Position actuelle :</strong> {position.lat.toFixed(6)},{" "}
-              {position.lon.toFixed(6)}
+          {/* Statut de connexion */}
+          <div className="mt-3 p-2 rounded bg-gray-50">
+            <p className="flex items-center gap-2">
+              <span
+                className={`inline-block w-2 h-2 rounded-full ${
+                  isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                }`}
+              ></span>
+              <strong>État:</strong>{" "}
+              {isConnected ? "Connecté au suivi" : "Déconnecté"}
             </p>
+          </div>
+
+          {/* Affichage position */}
+          {position ? (
+            <div className="mt-3 p-2 rounded bg-blue-50">
+              <p>
+                <strong>Position actuelle :</strong>
+              </p>
+              <p className="font-mono text-sm">
+                Lat: {position.lat.toFixed(6)}
+                <br />
+                Lon: {position.lon.toFixed(6)}
+              </p>
+            </div>
           ) : (
-            <p>{error || "Récupération de la position..."}</p>
+            <p className="mt-3 text-gray-600">
+              {error || "Récupération de la position..."}
+            </p>
+          )}
+
+          {error && (
+            <div className="mt-3 p-2 rounded bg-red-50 text-red-700">
+              <p className="text-sm">{error}</p>
+            </div>
           )}
         </div>
 

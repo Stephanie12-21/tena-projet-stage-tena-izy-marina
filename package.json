@@ -4,10 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "ws": "tsx watch server-ws.ts",
     "build": "prisma generate && next build",
     "start": "next start",
+    "dev:all": "concurrently \"npm run dev\" \"npm run ws\"",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "ws:prod": "tsx server-ws.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.17.0",
@@ -56,6 +59,8 @@
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "prisma": "^6.17.0",
