@@ -20,6 +20,7 @@ export async function GET(
         driverProfile: {
           include: {
             license: true,
+            image: true,
           },
         },
       },
