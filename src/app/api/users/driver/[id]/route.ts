@@ -39,9 +39,7 @@ export async function GET(
     const bus = await prisma.bus.findFirst({
       where: { driverId: id },
       include: {
-        driver: {
-          select: { id: true, nom: true, prenom: true, email: true },
-        },
+        driver: { include: { driverProfile: true } },
         children: {
           include: {
             school: {
@@ -68,6 +66,31 @@ export async function GET(
     return NextResponse.json({ driver, bus });
   } catch (error) {
     console.error("Erreur API /driver/[id]/bus :", error);
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}
+
+export async function POST(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: driverId } = await context.params;
+    const { lat, lon } = await req.json();
+
+    if (lat == null || lon == null) {
+      return NextResponse.json({ error: "Lat et lon requis" }, { status: 400 });
+    }
+
+    // 🔹 Met à jour la position actuelle du chauffeur
+    const updatedDriver = await prisma.driverProfile.update({
+      where: { userId: driverId },
+      data: { currentLat: lat, currentLong: lon },
+    });
+
+    return NextResponse.json(updatedDriver);
+  } catch (err) {
+    console.error(err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

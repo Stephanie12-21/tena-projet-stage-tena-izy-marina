@@ -60,6 +60,8 @@ export async function updateChild(data: UpdateChildInput) {
     schoolAdresse,
     schoolLat,
     schoolLong,
+    arrivalTime,
+    departureTime,
     imageUrl,
   } = data;
 
@@ -72,6 +74,8 @@ export async function updateChild(data: UpdateChildInput) {
         adresse,
         homeLat,
         homeLong,
+        arrivalTime,
+        departureTime,
         // 🔹 Mise à jour de l'image
         imageprofile: {
           upsert: {

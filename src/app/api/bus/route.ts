@@ -5,7 +5,11 @@ export async function GET() {
   try {
     const bus = await prisma.bus.findMany({
       include: {
-        driver: true,
+        driver: {
+          include: {
+            driverProfile: true,
+          },
+        },
       },
     });
     return NextResponse.json(bus);

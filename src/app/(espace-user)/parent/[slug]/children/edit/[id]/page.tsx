@@ -25,6 +25,8 @@ interface GeoapifyFeature {
 }
 interface EditableChild extends ChildWithRelations {
   file?: File; // champ temporaire pour l'image locale
+  arrivalTime: string; // ⬅️ ajouté
+  departureTime: string; // ⬅️ ajouté
 }
 
 export default function EditChildPage() {
@@ -254,6 +256,8 @@ export default function EditChildPage() {
         schoolAdresse: child.school?.adresse,
         schoolLat: child.school?.schoolLat,
         schoolLong: child.school?.schoolLong,
+        arrivalTime: child.arrivalTime,
+        departureTime: child.departureTime,
         imageUrl,
       };
 
@@ -409,6 +413,33 @@ export default function EditChildPage() {
                 ))}
               </ul>
             )}
+          </div>
+          {/* Heure d'arrivée à l'école */}
+          <div>
+            <Label>Heure darrivée à lécole</Label>
+            <Input
+              type="time"
+              value={child.arrivalTime || ""}
+              onChange={(e) =>
+                setChild((prev) =>
+                  prev ? { ...prev, arrivalTime: e.target.value } : prev
+                )
+              }
+            />
+          </div>
+
+          {/* Heure de départ de l'école */}
+          <div>
+            <Label>Heure de départ de lécole</Label>
+            <Input
+              type="time"
+              value={child.departureTime || ""}
+              onChange={(e) =>
+                setChild((prev) =>
+                  prev ? { ...prev, departureTime: e.target.value } : prev
+                )
+              }
+            />
           </div>
 
           {/* Coordonnées école */}

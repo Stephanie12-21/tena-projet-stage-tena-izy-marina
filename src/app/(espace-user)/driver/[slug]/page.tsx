@@ -7,39 +7,63 @@ import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/app/context/protectedtoute";
 import { signOut } from "@/app/actions/auth";
 
-const MainPageAsdriver = () => {
-  const { user, dbUser, loading } = useAuth();
-  const router = useRouter();
-
+// -------------------- Hook WebSocket --------------------
+function useDriverWebSocket(driverId: string | undefined) {
   const [position, setPosition] = useState<{ lat: number; lon: number } | null>(
     null
   );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!driverId) return;
+
     if (!navigator.geolocation) {
       setError("La géolocalisation n’est pas supportée par votre navigateur.");
       return;
     }
 
-    // 🔹 Suivi en temps réel
+    const ws = new WebSocket("ws://localhost:3000/api/ws");
+
+    ws.onopen = () => console.log("Connecté au WebSocket");
+    ws.onclose = () => console.log("Déconnecté du WebSocket");
+    ws.onerror = (err) => {
+      console.error("Erreur WebSocket :", err);
+      setError("Erreur WebSocket");
+    };
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        setPosition({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        const coords = {
+          driverId,
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        };
+        setPosition({ lat: coords.lat, lon: coords.lon });
+
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(coords));
+        }
       },
-      (err) => {
-        setError(err.message);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10000, // 10 secondes
-        timeout: 5000,
-      }
+      (err) => setError(`Erreur géolocalisation : ${err.message}`),
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
     );
 
-    // 🔹 Nettoyage au démontage du composant
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+      ws.close();
+    };
+  }, [driverId]);
+
+  return { position, error };
+}
+
+// -------------------- Composant conducteur --------------------
+const MainPageAsdriver = () => {
+  const { user, dbUser, loading } = useAuth();
+  const router = useRouter();
+
+  // 🔹 Hook WebSocket
+  const { position, error } = useDriverWebSocket(dbUser?.id);
 
   if (loading) return <div>Chargement...</div>;
   if (!user) return <div>Vous n’êtes pas connecté.</div>;
@@ -62,7 +86,7 @@ const MainPageAsdriver = () => {
     <div className="p-6 max-w-3xl mx-auto">
       <ProtectedRoute>
         <h1 className="text-2xl font-semibold mb-4">
-          Bienvenue, {dbUser?.nom || user.user_metadata?.full_name || "driver"}{" "}
+          Bienvenue, {dbUser?.nom || user.user_metadata?.full_name || "driver"}
         </h1>
 
         <div className="bg-white shadow rounded-xl p-4 mb-6">
@@ -77,7 +101,7 @@ const MainPageAsdriver = () => {
             <strong>Rôle :</strong> {dbUser?.role}
           </p>
 
-          {/* 🔹 Affichage de la position en temps réel */}
+          {/* 🔹 Affichage position et erreur */}
           {position ? (
             <p>
               <strong>Position actuelle :</strong> {position.lat.toFixed(6)},{" "}
@@ -109,6 +133,7 @@ const MainPageAsdriver = () => {
           >
             Les logs de présence
           </Button>
+
           <Button
             onClick={() => goTo("profil")}
             className="w-full py-6 text-lg"

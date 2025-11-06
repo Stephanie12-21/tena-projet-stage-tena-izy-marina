@@ -32,7 +32,45 @@ export default function BusesPage() {
         console.error("Erreur fetch buses :", error);
       }
     };
-    fetchBuses();
+
+    fetchBuses(); // fetch initial
+    const intervalId = setInterval(fetchBuses, 10000); // fetch toutes les 10s pour infos autres que position
+
+    // 🔹 WebSocket pour position en temps réel
+    const ws = new WebSocket("ws://localhost:3000/api/ws");
+    ws.onopen = () => console.log("Connecté au WebSocket pour positions buses");
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data); // { driverId, lat, lon }
+        setBuses((prev) =>
+          prev.map((bus) => {
+            if (bus.driver!.driverProfile!.id === data.driverId) {
+              return {
+                ...bus,
+                driver: {
+                  ...bus.driver!,
+                  driverProfile: {
+                    ...bus.driver!.driverProfile!,
+                    currentLat: data.lat,
+                    currentLong: data.lon,
+                  },
+                },
+              };
+            }
+            return bus;
+          })
+        );
+      } catch (err) {
+        console.error("Erreur parsing WebSocket message :", err);
+      }
+    };
+
+    ws.onerror = (err) => console.error("Erreur WebSocket :", err);
+
+    return () => {
+      clearInterval(intervalId);
+      ws.close();
+    };
   }, []);
 
   const handleDelete = async (busId: string) => {
@@ -62,15 +100,13 @@ export default function BusesPage() {
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Chargement...</p>
       </div>
     );
-  }
-
-  if (!dbUser) {
+  if (!dbUser)
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <Card className="p-8 text-center max-w-md">
@@ -78,7 +114,6 @@ export default function BusesPage() {
         </Card>
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
@@ -99,6 +134,7 @@ export default function BusesPage() {
                 <th className="p-3">Places disponibles</th>
                 <th className="p-3">Statut</th>
                 <th className="p-3">Chauffeur</th>
+                <th className="p-3">Position actuelle</th>
                 <th className="p-3">Actions</th>
               </tr>
             </thead>
@@ -112,6 +148,14 @@ export default function BusesPage() {
                   <td className="p-3">
                     {bus.driver
                       ? `${bus.driver.nom} ${bus.driver.prenom}`
+                      : "—"}
+                  </td>
+                  <td className="p-3">
+                    {bus.driver?.driverProfile?.currentLat != null &&
+                    bus.driver?.driverProfile?.currentLong != null
+                      ? `${bus.driver.driverProfile.currentLat.toFixed(
+                          6
+                        )}, ${bus.driver.driverProfile.currentLong.toFixed(6)}`
                       : "—"}
                   </td>
                   <td className="p-3 flex gap-2">
@@ -149,7 +193,7 @@ export default function BusesPage() {
               ))}
               {buses.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="text-center p-4 text-gray-500">
+                  <td colSpan={7} className="text-center p-4 text-gray-500">
                     Aucun bus trouvé.
                   </td>
                 </tr>

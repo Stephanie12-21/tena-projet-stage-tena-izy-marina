@@ -8,31 +8,22 @@ import {
 
 // ------------------- FORMULAIRE D'INSCRIPTION -------------------
 export type SignUpFormData = Partial<Children> & {
-  // Informations parent
   prenom?: string;
   nom?: string;
   email?: string;
   phone?: string;
-
-  // Enfant
   prenomEnfant?: string;
   nomEnfant?: string;
   adresse?: string;
   homeLat?: number;
   homeLong?: number;
   photoEnfant?: File | null;
-
-  // 🕓 Horaires
-  arrivalTime?: string; // Heure d'arrivée à l'école (ex: "07:30")
-  departureTime?: string; // Heure de sortie (ex: "16:30")
-
-  // École
+  arrivalTime?: string;
+  departureTime?: string;
   schoolName?: string;
   schoolAddress?: string;
   schoolLat?: number;
   schoolLong?: number;
-
-  // Auth
   password?: string;
   confirmPassword?: string;
 };
@@ -42,6 +33,7 @@ export type ChildWithRelations = Children & {
   school: School;
   imageprofile: Image;
   parent: Users;
+  
 };
 
 // ------------------- INPUTS -------------------
@@ -52,16 +44,11 @@ export interface UpdateChildInput {
   adresse: string;
   homeLat: number;
   homeLong: number;
-
-  // École (optionnelle si mise à jour)
   schoolNom?: string;
   schoolAdresse?: string;
   schoolLat?: number;
   schoolLong?: number;
-
   imageUrl: string;
-
-  // 🕓 Horaires
   arrivalTime?: string;
   departureTime?: string;
 }
@@ -74,14 +61,10 @@ export interface ChildInput {
   homeLong: number;
   photoUrl: string;
   parentId: string;
-
-  // 🏫 École
   schoolName: string;
   schoolAddress: string;
   schoolLat: number;
   schoolLong: number;
-
-  // 🕓 Horaires
   arrivalTime: string;
   departureTime: string;
 }
@@ -105,20 +88,32 @@ export interface User {
   createdAt: string;
 }
 
-export type Driver = {
+export interface DriverProfile {
+  id: string;
+  userId: string;
+  currentLat: number;
+  currentLong: number;
+  imageId: string;
+  license: {
+    licenseNumber: string;
+    licenseType: string;
+    licenseExpiration: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Driver {
   id: string;
   nom: string;
   prenom: string;
   email: string;
   phone: string;
-  driverProfile?: {
-    license?: {
-      licenseNumber: string | null;
-      licenseType: string | null;
-      licenseExpiration: string | Date | null;
-    } | null;
-  } | null;
-};
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  driverProfile?: DriverProfile | null;
+}
 
 export interface Bus {
   id: string;
@@ -126,5 +121,5 @@ export interface Bus {
   brand: string;
   seats: number;
   status: BusStatus;
-  driver: Driver | null;
+  driver?: Driver | null;
 }

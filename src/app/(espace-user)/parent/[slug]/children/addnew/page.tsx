@@ -34,6 +34,8 @@ interface FormData {
   schoolLat: number;
   schoolLong: number;
   file: File | null;
+  arrivalTime: string; // ⬅️ nouveau
+  departureTime: string;
 }
 
 export default function CreateChildPage() {
@@ -52,6 +54,8 @@ export default function CreateChildPage() {
     schoolLat: 0,
     schoolLong: 0,
     file: null,
+    arrivalTime: "", // ⬅️
+    departureTime: "",
   });
 
   const [preview, setPreview] = useState<string | null>(null);
@@ -188,6 +192,8 @@ export default function CreateChildPage() {
         schoolAddress: formData.schoolAddress,
         schoolLat: formData.schoolLat,
         schoolLong: formData.schoolLong,
+        arrivalTime: formData.arrivalTime, // ⬅️ ajouté
+        departureTime: formData.departureTime, // ⬅️ ajouté
       });
 
       toast.success("Enfant créé avec succès !");
@@ -286,6 +292,26 @@ export default function CreateChildPage() {
               </ul>
             )}
           </div>
+          <div>
+            <Label>Heure d&apos;arrivée à l&apos;école</Label>
+            <Input
+              type="time"
+              value={formData.arrivalTime}
+              onChange={(e) => handleChange("arrivalTime", e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label>Heure de départ de l&apos;école</Label>
+            <Input
+              type="time"
+              value={formData.departureTime}
+              onChange={(e) => handleChange("departureTime", e.target.value)}
+              required
+            />
+          </div>
+
           <Button type="submit" disabled={saving}>
             {saving ? "Création en cours..." : "Créer l'enfant"}
           </Button>

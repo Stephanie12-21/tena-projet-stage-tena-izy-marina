@@ -14,7 +14,9 @@ export async function GET(
     const bus = await prisma.bus.findUnique({
       where: { id },
       include: {
-        driver: true,
+        driver: {
+          include: { driverProfile: true },
+        },
       },
     });
 
