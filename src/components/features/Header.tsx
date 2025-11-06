@@ -136,7 +136,7 @@ export const Header = () => {
                     size="sm"
                     className={cn(isScrolled && "lg:hidden")}
                   >
-                    <Link href="/register">S&apos;inscrire</Link>
+                    <Link href="/register/asParent">S&apos;inscrire</Link>
                   </Button>
                 </div>
               )}
