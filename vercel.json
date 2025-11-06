@@ -1,7 +1,0 @@
-{
-  "functions": {
-    ".next/server/**/*.js": {
-      "includeFiles": "generated/prisma/**"
-    }
-  }
-}
