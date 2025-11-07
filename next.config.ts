@@ -1,8 +1,18 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+import path from "path";
+
+// 🔧 On étend le type de Next.js pour y ajouter la propriété manquante
+interface NextExperimentalFix extends NonNullable<NextConfig["experimental"]> {
+  outputFileTracingExcludes?: Record<string, string[]>;
+}
+
+const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
-    "**/*": ["./generated/prisma/**/*"],
+    // Inclure les fichiers Prisma nécessaires
+    "api/**": ["./generated/prisma/**/*"],
+    "src/app/api/**": ["./generated/prisma/**/*"],
   },
+
   images: {
     remotePatterns: [
       {
@@ -11,11 +21,16 @@ const nextConfig = {
       },
     ],
   },
+
   experimental: {
+    // ✅ On applique le typage étendu ici
     serverActions: {
       bodySizeLimit: "30mb",
     },
-  },
+    outputFileTracingExcludes: {
+      "*": [path.join(process.env.USERPROFILE || "", "Application Data")],
+    },
+  } as NextExperimentalFix,
 };
 
-module.exports = nextConfig;
+export default nextConfig;
