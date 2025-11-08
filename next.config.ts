@@ -1,36 +1,26 @@
+// next.config.ts
 import type { NextConfig } from "next";
-import path from "path";
-
-// 🔧 On étend le type de Next.js pour y ajouter la propriété manquante
-interface NextExperimentalFix extends NonNullable<NextConfig["experimental"]> {
-  outputFileTracingExcludes?: Record<string, string[]>;
-}
 
 const nextConfig: NextConfig = {
+  reactStrictMode: true,
+
+  // Inclure les fichiers générés par Prisma pour le build serveur
   outputFileTracingIncludes: {
-    // Inclure les fichiers Prisma nécessaires
     "api/**": ["./generated/prisma/**/*"],
     "src/app/api/**": ["./generated/prisma/**/*"],
   },
 
+  // Configuration des images distantes
   images: {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "res.cloudinary.com",
+        hostname: "**", // remplace par le domaine exact si tu veux plus de sécurité
       },
     ],
   },
 
-  experimental: {
-    // ✅ On applique le typage étendu ici
-    serverActions: {
-      bodySizeLimit: "30mb",
-    },
-    outputFileTracingExcludes: {
-      "*": [path.join(process.env.USERPROFILE || "", "Application Data")],
-    },
-  } as NextExperimentalFix,
+  // ⚠ Ne rien mettre ici pour PWA, sinon GenerateSW plante
 };
 
 export default nextConfig;

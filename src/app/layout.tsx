@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SmartRide",
   description: "Projet de stage réalisé par Stéphanie MAMINIAINA",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
