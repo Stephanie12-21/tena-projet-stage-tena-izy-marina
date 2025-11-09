@@ -1,9 +1,8 @@
-// next-pwa.config.ts
 
 const pwaConfig = {
-  dest: "public", // dossier où sera généré le SW
-  register: true, // auto-enregistrer le SW
-  skipWaiting: true, // activer immédiatement le nouveau SW
+  dest: "public", 
+  register: true,
+  skipWaiting: true, 
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
@@ -13,7 +12,7 @@ const pwaConfig = {
         networkTimeoutSeconds: 15,
         expiration: {
           maxEntries: 150,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 jours
+          maxAgeSeconds: 30 * 24 * 60 * 60, 
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -27,7 +26,7 @@ const pwaConfig = {
         cacheName: "images",
         expiration: {
           maxEntries: 200,
-          maxAgeSeconds: 60 * 24 * 60 * 60, // 60 jours
+          maxAgeSeconds: 60 * 24 * 60 * 60,
         },
       },
     },
