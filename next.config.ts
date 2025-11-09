@@ -5,9 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   // 👇 très important pour Prisma + Next.js (server components)
-  experimental: {
-    serverComponentsExternalPackages: ["@prisma/client", "prisma"],
-  },
+  serverExternalPackages: ["@prisma/client", "prisma"],
 
   // Inclure les fichiers générés par Prisma pour le build serveur
   outputFileTracingIncludes: {
