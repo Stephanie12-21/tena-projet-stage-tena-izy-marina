@@ -22,7 +22,7 @@ interface Bus {
 interface Anomaly {
   id: string;
   description: string;
-  resolved: boolean;
+  adresse: string;
   createdAt: string;
   updatedAt: string;
   child: Child;
@@ -71,7 +71,7 @@ const AnomaliesPageAdmin = () => {
               <th className="border px-2 py-1">Bus</th>
               <th className="border px-2 py-1">Chauffeur</th>
               <th className="border px-2 py-1">Description</th>
-              <th className="border px-2 py-1">Résolu</th>
+              <th className="border px-2 py-1">Adresse</th>
               <th className="border px-2 py-1">Créé le</th>
             </tr>
           </thead>
@@ -86,7 +86,7 @@ const AnomaliesPageAdmin = () => {
                   {a.driver.nom} {a.driver.prenom}
                 </td>
                 <td className="border px-2 py-1">{a.description}</td>
-                <td className="border px-2 py-1">{a.resolved ? "✅" : "❌"}</td>
+                <td className="border px-2 py-1">{a.adresse ? "✅" : "❌"}</td>
                 <td className="border px-2 py-1">
                   {new Date(a.createdAt).toLocaleString()}
                 </td>

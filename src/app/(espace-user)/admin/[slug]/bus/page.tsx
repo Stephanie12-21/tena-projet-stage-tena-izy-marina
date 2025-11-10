@@ -15,6 +15,7 @@ export default function BusesPage() {
   const router = useRouter();
 
   const [buses, setBuses] = useState<Bus[]>([]);
+  const [addresses, setAddresses] = useState<Record<string, string>>({});
   const [selectedBusChildren, setSelectedBusChildren] = useState<
     ChildWithRelations[]
   >([]);
@@ -27,50 +28,45 @@ export default function BusesPage() {
         const res = await fetch("/api/bus");
         if (!res.ok) throw new Error("Erreur API /api/bus");
         const data = await res.json();
-        setBuses(Array.isArray(data.buses) ? data.buses : data);
+        const busArray = Array.isArray(data.buses) ? data.buses : data;
+        setBuses(busArray);
+
+        // Boucle for…of pour fetch Geoapify pour chaque bus avec coordonnées
+        for (const bus of busArray) {
+          if (
+            bus.driver?.driverProfile?.currentLat != null &&
+            bus.driver?.driverProfile?.currentLong != null
+          ) {
+            const lat = bus.driver.driverProfile.currentLat;
+            const lon = bus.driver.driverProfile.currentLong;
+
+            try {
+              const geoRes = await fetch(
+                `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&format=json&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_KEY}`
+              );
+
+              const geoData = await geoRes.json();
+
+              // Affiche la réponse complète de Geoapify dans la console
+              console.log("Geoapify response for bus", bus.id, geoData);
+
+              const address =
+                geoData.results?.[0]?.formatted || "Adresse inconnue";
+              setAddresses((prev) => ({ ...prev, [bus.id]: address }));
+            } catch (err) {
+              console.error("Erreur Geoapify:", err);
+            }
+          }
+        }
       } catch (error) {
         console.error("Erreur fetch buses :", error);
       }
     };
 
-    fetchBuses(); // fetch initial
-    const intervalId = setInterval(fetchBuses, 10000); // fetch toutes les 10s pour infos autres que position
+    fetchBuses();
+    const intervalId = setInterval(fetchBuses, 10000); // refresh toutes les 10s
 
-    // 🔹 WebSocket pour position en temps réel
-    const ws = new WebSocket("ws://localhost:3000/api/ws");
-    ws.onopen = () => console.log("Connecté au WebSocket pour positions buses");
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data); // { driverId, lat, lon }
-        setBuses((prev) =>
-          prev.map((bus) => {
-            if (bus.driver!.driverProfile!.id === data.driverId) {
-              return {
-                ...bus,
-                driver: {
-                  ...bus.driver!,
-                  driverProfile: {
-                    ...bus.driver!.driverProfile!,
-                    currentLat: data.lat,
-                    currentLong: data.lon,
-                  },
-                },
-              };
-            }
-            return bus;
-          })
-        );
-      } catch (err) {
-        console.error("Erreur parsing WebSocket message :", err);
-      }
-    };
-
-    ws.onerror = (err) => console.error("Erreur WebSocket :", err);
-
-    return () => {
-      clearInterval(intervalId);
-      ws.close();
-    };
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleDelete = async (busId: string) => {
@@ -106,6 +102,7 @@ export default function BusesPage() {
         <p>Chargement...</p>
       </div>
     );
+
   if (!dbUser)
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -134,7 +131,7 @@ export default function BusesPage() {
                 <th className="p-3">Places disponibles</th>
                 <th className="p-3">Statut</th>
                 <th className="p-3">Chauffeur</th>
-                <th className="p-3">Position actuelle</th>
+                <th className="p-3">Adresse actuelle</th>
                 <th className="p-3">Actions</th>
               </tr>
             </thead>
@@ -151,12 +148,7 @@ export default function BusesPage() {
                       : "—"}
                   </td>
                   <td className="p-3">
-                    {bus.driver?.driverProfile?.currentLat != null &&
-                    bus.driver?.driverProfile?.currentLong != null
-                      ? `${bus.driver.driverProfile.currentLat.toFixed(
-                          6
-                        )}, ${bus.driver.driverProfile.currentLong.toFixed(6)}`
-                      : "—"}
+                    {addresses[bus.id] || "Chargement..."}
                   </td>
                   <td className="p-3 flex gap-2">
                     <Button
