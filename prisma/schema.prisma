@@ -224,7 +224,6 @@ enum ScanType {
 model Anomaly {
   id          String @id @default(uuid())
   description String
-  adresse     String
 
   // Enfant concerné
   child   Children @relation(fields: [childId], references: [id])
