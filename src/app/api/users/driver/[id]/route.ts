@@ -49,7 +49,7 @@ export async function GET(
               select: { url: true },
             },
             parent: {
-              select: { nom: true, prenom: true, phone: true },
+              select: { nom: true, prenom: true, phone: true, email: true },
             },
           },
         },

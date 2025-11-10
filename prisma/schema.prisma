@@ -30,6 +30,7 @@ model Users {
   driverProfile DriverProfile? // Pour les chauffeurs
   buses         Bus[] // Buses assignées si DRIVER
   scanLogs      ScanLog[]
+  anomalies     Anomaly[]
 }
 
 // Enum des rôles
@@ -121,6 +122,7 @@ model Children {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   scanLogs  ScanLog[]
+  anomalies Anomaly[]
 }
 
 // ------------------- SCHOOL -------------------
@@ -185,6 +187,7 @@ model Bus {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   scanLogs  ScanLog[]
+  anomalies Anomaly[]
 }
 
 enum BusStatus {
@@ -204,18 +207,36 @@ model ScanLog {
   driver   Users  @relation(fields: [driverId], references: [id])
   driverId String
 
-  // Type de scan : montée ou descente
   type ScanType
 
-  // Position GPS du chauffeur au moment du scan
   lat  Float?
   long Float?
 
-  // Date et heure du scan
   createdAt DateTime @default(now())
 }
 
 enum ScanType {
   BOARDING
   DROPOFF
+}
+
+// ------------------- ANOMALIES -------------------
+model Anomaly {
+  id          String @id @default(uuid())
+  description String
+
+  // Enfant concerné
+  child   Children @relation(fields: [childId], references: [id])
+  childId String
+
+  // Bus concerné
+  bus   Bus    @relation(fields: [busId], references: [id])
+  busId String
+
+  // Chauffeur concerné
+  driver   Users  @relation(fields: [driverId], references: [id])
+  driverId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
