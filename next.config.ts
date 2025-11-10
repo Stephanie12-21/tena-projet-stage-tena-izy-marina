@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
 
   // 👇 très important pour Prisma + Next.js (server components)
   serverExternalPackages: ["@prisma/client", "prisma"],
-  optimizeCss: false,
 
   // Inclure les fichiers générés par Prisma pour le build serveur
   outputFileTracingIncludes: {
