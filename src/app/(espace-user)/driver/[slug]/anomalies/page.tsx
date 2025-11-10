@@ -50,7 +50,6 @@ export default function ReportAnomalyForm() {
     if (!dbUser || !bus || bus.children.length === 0) return;
 
     try {
-      // On crée l'anomalie pour chaque enfant du bus
       await Promise.all(
         bus.children.map((child) =>
           reportAnomaly(dbUser.id, bus.id, child.id, description)
@@ -81,6 +80,7 @@ export default function ReportAnomalyForm() {
         placeholder="Décrivez l'incident..."
         required
       />
+       
 
       <button
         type="submit"
