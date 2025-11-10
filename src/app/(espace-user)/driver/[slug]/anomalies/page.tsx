@@ -25,6 +25,7 @@ export default function ReportAnomalyForm() {
   const { dbUser, loading } = useAuth();
   const [bus, setBus] = useState<Bus | null>(null);
   const [description, setDescription] = useState<string>("");
+  const [adresse, setAdresse] = useState<string>(""); // ✅ nouvel état pour l'adresse
   const [message, setMessage] = useState<string>("");
 
   // 🔹 Récupération du bus et de ses enfants via l'API
@@ -52,11 +53,12 @@ export default function ReportAnomalyForm() {
     try {
       await Promise.all(
         bus.children.map((child) =>
-          reportAnomaly(dbUser.id, bus.id, child.id, description)
+          reportAnomaly(dbUser.id, bus.id, child.id, description, adresse)
         )
       );
       setMessage("✅ Anomalie signalée pour tous les enfants !");
       setDescription("");
+      setAdresse(""); // réinitialiser l'adresse après envoi
     } catch (err) {
       if (err instanceof Error) setMessage("❌ Erreur : " + err.message);
       else setMessage("❌ Une erreur inconnue est survenue");
@@ -65,7 +67,7 @@ export default function ReportAnomalyForm() {
 
   if (loading) return <p>Chargement...</p>;
   if (!dbUser || dbUser.role !== "DRIVER")
-    return <p>Vous n êtes pas autorisé.</p>;
+    return <p>Vous nêtes pas autorisé.</p>;
 
   return (
     <form onSubmit={handleSubmit} className="p-4 space-y-3">
@@ -80,7 +82,18 @@ export default function ReportAnomalyForm() {
         placeholder="Décrivez l'incident..."
         required
       />
-       
+
+      {/* Input pour l'adresse */}
+      <input
+        type="text"
+        value={adresse}
+        onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          setAdresse(e.target.value)
+        }
+        className="border p-2 rounded w-full"
+        placeholder="Adresse de l'incident"
+        required
+      />
 
       <button
         type="submit"
