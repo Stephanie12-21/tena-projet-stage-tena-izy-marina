@@ -9,8 +9,8 @@ import {
   MapPin,
   LogOut,
   User,
-  Zap,
   X,
+  HomeIcon,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
@@ -27,6 +27,7 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // ✅ Génération d’un slug sans accents ni espaces
   const slug = useMemo(() => {
     if (!dbUser?.prenom || !dbUser?.nom) return "";
     return `${dbUser.prenom}-${dbUser.nom}`
@@ -36,44 +37,26 @@ export function DashboardSidebar() {
       .replace(/\s+/g, "-");
   }, [dbUser]);
 
+  // ✅ Ajout du slash au début pour cohérence avec Next Router
   const menuItems: MenuItem[] = useMemo(
     () => [
-      {
-        label: "Anomalies",
-        path: "anomalies",
-        icon: AlertCircle,
-      },
-      {
-        label: "Mes trajets",
-        path: "trajets",
-        icon: Navigation,
-      },
-      {
-        label: "Logs de présence",
-        path: "logs-presence",
-        icon: MapPin,
-      },
-      {
-        label: "Mon profil",
-        path: "profil",
-        icon: User,
-      },
+      { label: "Dashboard", path: "/", icon: HomeIcon },
+      { label: "Anomalies", path: "/anomalies", icon: AlertCircle },
+      { label: "Mes trajets", path: "/trajets", icon: Navigation },
+      { label: "Logs de présence", path: "/logs-presence", icon: MapPin },
+      { label: "Mon profil", path: "/profil", icon: User },
     ],
     []
   );
 
-  // Close mobile menu on route change
+  // ✅ Ferme le menu mobile lors d’un changement de route
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Prevent scroll on body when mobile menu is open
+  // ✅ Empêche le scroll du body quand le menu mobile est ouvert
   useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -81,7 +64,7 @@ export function DashboardSidebar() {
 
   const goTo = (path: string) => {
     if (!slug) return;
-    router.push(`/driver/${slug}/${path}`);
+    router.push(`/driver/${slug}${path}`);
   };
 
   const handleSignOut = async () => {
@@ -89,33 +72,41 @@ export function DashboardSidebar() {
       await signOut();
       router.push("/login");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      console.error("Erreur lors de la déconnexion :", error);
     }
   };
 
   const isActiveRoute = (path: string) => {
-    return pathname?.includes(path);
+    if (!slug) return false;
+    const fullPath = `/driver/${slug}${path === "/" ? "" : path}`;
+    return pathname === fullPath;
   };
 
   const getInitials = () => {
-    if (!dbUser?.prenom || !dbUser?.nom) return "DR";
+    if (!dbUser?.prenom || !dbUser?.nom) return "**";
     return `${dbUser.prenom[0]}${dbUser.nom[0]}`.toUpperCase();
   };
 
   return (
     <>
-      {/* Mobile Header */}
+      {/* ✅ Header mobile */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-16 bg-slate-950 border-b border-slate-800/50 backdrop-blur-xl">
         <div className="h-full px-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
-              <Zap className="w-5 h-5 text-white" fill="white" />
+          {dbUser && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shrink-0">
+                {getInitials()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {dbUser.prenom} {dbUser.nom}
+                </p>
+                <p className="text-xs text-slate-400 truncate">
+                  Chauffeur de bus scolaire
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-base font-bold text-white">Driver</h2>
-              <p className="text-xs text-slate-400">Dashboard</p>
-            </div>
-          </div>
+          )}
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -143,7 +134,7 @@ export function DashboardSidebar() {
         </div>
       </div>
 
-      {/* Mobile Overlay */}
+      {/* ✅ Overlay mobile */}
       {mobileMenuOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
@@ -151,42 +142,44 @@ export function DashboardSidebar() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* ✅ Sidebar */}
       <aside
-        className={`
-          lg:w-72
-          fixed lg:static inset-y-0 left-0 z-50
-          w-72
+        className={`lg:w-72 fixed lg:static inset-y-0 left-0 z-50 w-72
           ${
             mobileMenuOpen
               ? "translate-x-0"
               : "-translate-x-full lg:translate-x-0"
           }
           bg-slate-950 border-r border-slate-800/50 backdrop-blur-xl text-slate-100 
-          transition-all duration-300 flex flex-col
-          lg:mt-0 mt-16
-        `}
-        aria-label="Menu de navigation principal"
+          transition-all duration-300 flex flex-col lg:mt-0 mt-16`}
       >
-        {/* linear overlay */}
+        {/* ✅ Overlay de fond */}
         <div className="absolute inset-0 bg-linear-to-br from-orange-500/5 via-transparent to-purple-500/5 pointer-events-none" />
 
-        {/* Content */}
+        {/* ✅ Contenu principal */}
         <div className="relative z-10 flex flex-col h-full">
-          {/* Header with brand - Desktop only */}
+          {/* Profil utilisateur (desktop uniquement) */}
           <div className="hidden lg:block p-6">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/30">
-                <Zap className="w-5 h-5 text-white" fill="white" />
+            {dbUser && (
+              <div className="px-4 py-5 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shrink-0">
+                    {getInitials()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">
+                      {dbUser.prenom} {dbUser.nom}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">
+                      Chauffeur de bus scolaire
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-white">Driver</h2>
-                <p className="text-xs text-slate-400">Dashboard</p>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Navigation */}
+          {/* ✅ Navigation */}
           <nav
             className="flex-1 px-4 space-y-1 overflow-y-auto lg:mt-0 mt-6"
             aria-label="Navigation principale"
@@ -202,12 +195,10 @@ export function DashboardSidebar() {
                       isActive
                         ? "bg-linear-to-r from-orange-500/20 to-orange-600/10 text-white shadow-lg shadow-orange-500/10"
                         : "hover:bg-slate-800/50 text-slate-400 hover:text-slate-200"
-                    }
-                  `}
+                    }`}
                   aria-label={item.label}
                   aria-current={isActive ? "page" : undefined}
                 >
-                  {/* Active indicator */}
                   {isActive && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-linear-to-b from-orange-400 to-orange-600 rounded-r-full" />
                   )}
@@ -237,28 +228,8 @@ export function DashboardSidebar() {
             })}
           </nav>
 
-          {/* User section */}
-          <div className="p-4 space-y-3 border-t border-slate-800/50">
-            {/* User card */}
-            {dbUser && (
-              <div className="px-4 py-3 rounded-xl bg-slate-900/50 border border-slate-800/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shrink-0">
-                    {getInitials()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">
-                      {dbUser.prenom} {dbUser.nom}
-                    </p>
-                    <p className="text-xs text-slate-500 truncate">
-                      Conducteur
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Logout button */}
+          {/* ✅ Bouton de déconnexion */}
+          <div className="p-4 border-t border-slate-800/50">
             <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group bg-slate-900/30 hover:bg-red-500/10 border border-slate-800/50 hover:border-red-500/30 text-slate-400 hover:text-red-400"
