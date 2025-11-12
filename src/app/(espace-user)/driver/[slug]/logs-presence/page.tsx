@@ -146,12 +146,6 @@ const LogsPresences = () => {
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
               Logs de Présence
             </h1>
-            <p className="text-slate-600">
-              Historique des montées et descentes —{" "}
-              <span className="font-semibold">
-                {logs.length} entrée{logs.length > 1 ? "s" : ""}
-              </span>
-            </p>
           </div>
         </div>
       </div>

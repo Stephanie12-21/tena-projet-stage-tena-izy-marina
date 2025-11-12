@@ -12,7 +12,7 @@ const MainPageAsParent = () => {
   const router = useRouter();
 
   if (loading) return <div>Chargement...</div>;
-  if (!user) return <div>Vous n’êtes pas connecté.</div>;
+  if (!user) return <div>Vous n&apos;êtes pas connecté.</div>;
 
   const slug = `${dbUser?.prenom}-${dbUser?.nom}`
     .toLowerCase()

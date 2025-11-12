@@ -6,7 +6,11 @@ export async function GET() {
     const logs = await prisma.scanLog.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        child: true,
+        child: {
+          include: {
+            imageprofile: true,
+          },
+        },
         bus: true,
         driver: true,
       },
