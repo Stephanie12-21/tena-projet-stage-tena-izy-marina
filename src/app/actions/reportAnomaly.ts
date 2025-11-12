@@ -58,12 +58,12 @@ export async function reportAnomaly(
   childId: string,
   description: string
 ) {
-  console.log("🚨 Début reportAnomaly", {
-    driverId,
-    busId,
-    childId,
-    description,
-  });
+  // console.log("🚨 Début reportAnomaly", {
+  //   driverId,
+  //   busId,
+  //   childId,
+  //   description,
+  // });
 
   if (!driverId || !busId || !childId || !description) {
     throw new Error("Tous les champs sont requis");
@@ -109,7 +109,7 @@ export async function reportAnomaly(
       },
     });
 
-    console.log("✅ Anomalie enregistrée :", anomaly);
+    // console.log("✅ Anomalie enregistrée :", anomaly);
 
     // 🔹 Envoi d'un mail au parent (si email disponible)
     if (child.parent?.email) {

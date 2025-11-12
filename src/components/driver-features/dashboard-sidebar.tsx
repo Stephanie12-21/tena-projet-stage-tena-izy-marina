@@ -3,15 +3,7 @@
 import { useAuth } from "@/app/context/provider";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "@/app/actions/auth";
-import {
-  AlertCircle,
-  Navigation,
-  MapPin,
-  LogOut,
-  User,
-  X,
-  HomeIcon,
-} from "lucide-react";
+import { Navigation, MapPin, LogOut, User, X, HomeIcon } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
 interface MenuItem {
@@ -41,10 +33,9 @@ export function DashboardSidebar() {
   const menuItems: MenuItem[] = useMemo(
     () => [
       { label: "Dashboard", path: "/", icon: HomeIcon },
-      { label: "Anomalies", path: "/anomalies", icon: AlertCircle },
-      { label: "Mes trajets", path: "/trajets", icon: Navigation },
+      { label: "Itinéraires", path: "/trajets", icon: Navigation },
       { label: "Logs de présence", path: "/logs-presence", icon: MapPin },
-      { label: "Mon profil", path: "/profil", icon: User },
+      { label: "Profil utilisateur", path: "/profil", icon: User },
     ],
     []
   );
