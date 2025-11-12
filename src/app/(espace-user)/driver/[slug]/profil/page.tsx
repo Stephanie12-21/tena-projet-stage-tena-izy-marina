@@ -15,6 +15,8 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { uploadToCloudinary } from "@/app/actions/upload";
+import { User, Edit2, Save, X, Lock, FileText, Shield } from "lucide-react";
+import Image from "next/image";
 
 // 🔹 Validation Zod
 const profileSchema = z.object({
@@ -39,7 +41,9 @@ type DbUserWithDriver = {
   phone: string;
   role: "PARENT" | "DRIVER" | "ADMIN";
   driverProfile?: {
-    profilePhotoUrl?: string;
+    image?: {
+      url: string;
+    };
     license?: {
       licenseNumber: string;
       licenseType: "A" | "B" | "C" | "D" | "E";
@@ -129,7 +133,6 @@ export default function ProfilParent() {
     }
 
     try {
-      // 🔹 Upload images si présentes
       const uploadedProfilePhoto = profilePhoto
         ? await uploadToCloudinary(
             new Uint8Array(await profilePhoto.arrayBuffer()),
@@ -192,194 +195,353 @@ export default function ProfilParent() {
 
   return (
     <ProtectedRoute>
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
-        <h1 className="text-2xl font-semibold mb-4">Mon Profil</h1>
-
-        {/* Infos personnelles */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle>Informations personnelles</CardTitle>
-            {!editInfo && (
-              <Button variant="outline" onClick={() => setEditInfo(true)}>
-                Modifier
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              disabled={!editInfo}
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="Nom"
-            />
-            <Input
-              disabled={!editInfo}
-              value={prenom}
-              onChange={(e) => setPrenom(e.target.value)}
-              placeholder="Prénom"
-            />
-            <Input
-              disabled={!editInfo}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
-            />
-            <Input
-              disabled={!editInfo}
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Téléphone"
-            />
-            {editInfo && (
-              <div className="flex gap-2">
-                <Button disabled={loadingInfo} onClick={updateProfileHandler}>
-                  {loadingInfo ? "Mise à jour..." : "Sauvegarder"}
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => setEditInfo(false)}
-                >
-                  Annuler
-                </Button>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Header simplifié */}
+          <div className="flex items-center gap-4 pb-6 border-b">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full bg-linear-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white text-2xl font-bold shadow-md">
+                {dbUser?.prenom?.[0]?.toUpperCase() || "U"}
               </div>
-            )}
-          </CardContent>
-        </Card>
+              {dbUser?.role === "DRIVER" &&
+                dbUser?.driverProfile?.image?.url && (
+                  <Image
+                    height={80}
+                    width={80}
+                    src={dbUser.driverProfile.image.url}
+                    alt="Profile"
+                    className="absolute inset-0 w-20 h-20 rounded-full object-cover"
+                  />
+                )}
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">
+                {dbUser?.prenom} {dbUser?.nom}
+              </h1>
+              <p className="text-muted-foreground">{dbUser?.email}</p>
+            </div>
+          </div>
 
-        {/* Permis et photos chauffeur */}
-        {dbUser?.role === "DRIVER" && (
-          <Card>
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle>Permis et Photos</CardTitle>
-              {!editLicense && (
-                <Button variant="outline" onClick={() => setEditLicense(true)}>
-                  Modifier
-                </Button>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Colonne principale */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Infos personnelles */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-950 flex items-center justify-center">
+                        <User className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <CardTitle>Informations personnelles</CardTitle>
+                    </div>
+                    {!editInfo && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditInfo(true)}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Prénom</label>
+                      <Input
+                        disabled={!editInfo}
+                        value={prenom}
+                        onChange={(e) => setPrenom(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Nom</label>
+                      <Input
+                        disabled={!editInfo}
+                        value={nom}
+                        onChange={(e) => setNom(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Email</label>
+                    <Input
+                      disabled={!editInfo}
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Téléphone</label>
+                    <Input
+                      disabled={!editInfo}
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+
+                  {editInfo && (
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        disabled={loadingInfo}
+                        onClick={updateProfileHandler}
+                        className="bg-orange-600 hover:bg-orange-700"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        {loadingInfo ? "Mise à jour..." : "Sauvegarder"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setEditInfo(false)}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Annuler
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Permis chauffeur */}
+              {dbUser?.role === "DRIVER" && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <CardTitle>Informations du permis</CardTitle>
+                      </div>
+                      {!editLicense && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditLicense(true)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Numéro de permis
+                        </label>
+                        <Input
+                          disabled={!editLicense}
+                          value={licenseNumber}
+                          onChange={(e) => setLicenseNumber(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Type</label>
+                        <select
+                          disabled={!editLicense}
+                          value={licenseType}
+                          onChange={(e) =>
+                            setLicenseType(
+                              e.target.value as LicenseInfo["licenseType"]
+                            )
+                          }
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {["A", "B", "C", "D", "E"].map((t) => (
+                            <option key={t} value={t}>
+                              Permis {t}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Date d&apos;expiration
+                      </label>
+                      <Input
+                        disabled={!editLicense}
+                        type="date"
+                        value={licenseExpiration}
+                        onChange={(e) => setLicenseExpiration(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-3 pt-2">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Photo de profil
+                        </label>
+                        <Input
+                          type="file"
+                          disabled={!editLicense}
+                          accept="image/*"
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            e.target.files && setProfilePhoto(e.target.files[0])
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Permis recto
+                        </label>
+                        <Input
+                          type="file"
+                          disabled={!editLicense}
+                          accept="image/*"
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            e.target.files && setLicenseFront(e.target.files[0])
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Permis verso
+                        </label>
+                        <Input
+                          type="file"
+                          disabled={!editLicense}
+                          accept="image/*"
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            e.target.files && setLicenseBack(e.target.files[0])
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {editLicense && (
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          disabled={loadingLicense}
+                          onClick={updateLicenseHandler}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {loadingLicense ? "Mise à jour..." : "Sauvegarder"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setEditLicense(false)}
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Annuler
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               )}
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                disabled={!editLicense}
-                value={licenseNumber}
-                onChange={(e) => setLicenseNumber(e.target.value)}
-                placeholder="Numéro de permis"
-              />
-              <select
-                disabled={!editLicense}
-                value={licenseType}
-                onChange={(e) =>
-                  setLicenseType(e.target.value as LicenseInfo["licenseType"])
-                }
-                className="border rounded p-2 w-full"
-              >
-                {["A", "B", "C", "D", "E"].map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              <Input
-                disabled={!editLicense}
-                type="date"
-                value={licenseExpiration}
-                onChange={(e) => setLicenseExpiration(e.target.value)}
-              />
+            </div>
 
-              <div className="flex flex-col gap-2">
-                <label>Photo de profil :</label>
-                <Input
-                  type="file"
-                  disabled={!editLicense}
-                  accept="image/*"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    e.target.files && setProfilePhoto(e.target.files[0])
-                  }
-                />
-                <label>Permis recto :</label>
-                <Input
-                  type="file"
-                  disabled={!editLicense}
-                  accept="image/*"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    e.target.files && setLicenseFront(e.target.files[0])
-                  }
-                />
-                <label>Permis verso :</label>
-                <Input
-                  type="file"
-                  disabled={!editLicense}
-                  accept="image/*"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    e.target.files && setLicenseBack(e.target.files[0])
-                  }
-                />
-              </div>
+            {/* Colonne latérale */}
+            <div className="space-y-6">
+              {/* Sécurité */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-red-100 dark:bg-red-950 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <CardTitle>Sécurité</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {!editPass ? (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setEditPass(true)}
+                    >
+                      Changer le mot de passe
+                    </Button>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Mot de passe actuel
+                        </label>
+                        <Input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                      </div>
 
-              {editLicense && (
-                <div className="flex gap-2">
-                  <Button
-                    disabled={loadingLicense}
-                    onClick={updateLicenseHandler}
-                  >
-                    {loadingLicense ? "Mise à jour..." : "Sauvegarder"}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => setEditLicense(false)}
-                  >
-                    Annuler
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Nouveau mot de passe
+                        </label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                        />
+                      </div>
 
-        {/* Mot de passe */}
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle>Mot de passe</CardTitle>
-            {!editPass && (
-              <Button variant="outline" onClick={() => setEditPass(true)}>
-                Modifier
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {editPass && (
-              <>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mot de passe actuel"
-                />
-                <Input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Nouveau mot de passe"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    disabled={loadingPass}
-                    onClick={updatePasswordHandler}
-                  >
-                    {loadingPass ? "Mise à jour..." : "Changer"}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => setEditPass(false)}
-                  >
-                    Annuler
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          disabled={loadingPass}
+                          onClick={updatePasswordHandler}
+                          className="w-full bg-red-600 hover:bg-red-700"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {loadingPass ? "Mise à jour..." : "Confirmer"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setEditPass(false)}
+                          className="w-full"
+                        >
+                          Annuler
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Informations du compte */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                    </div>
+                    <CardTitle>Compte</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Rôle</span>
+                    <span className="font-medium">
+                      {dbUser?.role === "DRIVER"
+                        ? "Chauffeur"
+                        : dbUser?.role === "PARENT"
+                        ? "Parent"
+                        : "Administrateur"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Statut</span>
+                    <span className="text-green-600 font-medium">Actif</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
       <ToastContainer position="top-right" autoClose={5000} />
     </ProtectedRoute>

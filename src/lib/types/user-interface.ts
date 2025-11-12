@@ -33,7 +33,6 @@ export type ChildWithRelations = Children & {
   school: School;
   imageprofile: Image;
   parent: Users;
-  
 };
 
 // ------------------- INPUTS -------------------
