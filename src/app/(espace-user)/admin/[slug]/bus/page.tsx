@@ -31,7 +31,6 @@ export default function BusesPage() {
         const busArray = Array.isArray(data.buses) ? data.buses : data;
         setBuses(busArray);
 
-        // Boucle for…of pour fetch Geoapify pour chaque bus avec coordonnées
         for (const bus of busArray) {
           if (
             bus.driver?.driverProfile?.currentLat != null &&

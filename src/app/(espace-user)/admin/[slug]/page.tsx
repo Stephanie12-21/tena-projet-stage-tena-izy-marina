@@ -1,115 +1,185 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/app/context/provider";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { ProtectedRoute } from "@/app/context/protectedtoute";
-import { signOut } from "@/app/actions/auth";
+import { Users, UserCircle, Bus, Baby, Bell, User } from "lucide-react";
 
 const MainPageAsParent = () => {
   const { user, dbUser, loading } = useAuth();
-  const router = useRouter();
 
-  if (loading) return <div>Chargement...</div>;
-  if (!user) return <div>Vous n&apos;êtes pas connecté.</div>;
+  // États pour les statistiques
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalDrivers: 0,
+    totalChildren: 0,
+    totalBuses: 0,
+  });
 
-  const slug = `${dbUser?.prenom}-${dbUser?.nom}`
-    .toLowerCase()
-    .replace(/\s+/g, "-");
+  // Simulation du chargement des statistiques
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/stats");
+        const data = await res.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Erreur lors du chargement des statistiques:", error);
+      }
+    };
 
-  // 🔹 Fonction de navigation dynamique vers les pages enfants
-  const goTo = (path: string) => {
-    if (!slug) {
-      console.warn("Impossible de naviguer : slug non défini");
-      return;
-    }
-    router.push(`/admin/${slug}/${path}`);
-  };
+    if (user) fetchStats();
+  }, [user]);
 
-  // 🔹 Déconnexion via server action
-  const handleSignOut = async () => {
-    await signOut();
-    router.push("/login");
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <p className="text-gray-600">Vous n&apos;êtes pas connecté.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const statCards = [
+    {
+      title: "Utilisateurs",
+      value: stats.totalUsers,
+      icon: Users,
+      color: "bg-blue-500",
+      bgLight: "bg-blue-50",
+      textColor: "text-blue-600",
+    },
+    {
+      title: "Chauffeurs",
+      value: stats.totalDrivers,
+      icon: UserCircle,
+      color: "bg-green-500",
+      bgLight: "bg-green-50",
+      textColor: "text-green-600",
+    },
+    {
+      title: "Enfants",
+      value: stats.totalChildren,
+      icon: Baby,
+      color: "bg-purple-500",
+      bgLight: "bg-purple-50",
+      textColor: "text-purple-600",
+    },
+    {
+      title: "Bus",
+      value: stats.totalBuses,
+      icon: Bus,
+      color: "bg-orange-500",
+      bgLight: "bg-orange-50",
+      textColor: "text-orange-600",
+    },
+  ];
 
   return (
     <ProtectedRoute>
-      <div className="p-6 max-w-3xl mx-auto">
-        <h1 className="text-2xl font-semibold mb-4">
-          Bienvenue, {dbUser?.prenom} {dbUser?.nom}
-        </h1>
-
-        <div className="bg-white shadow rounded-xl p-4 mb-6">
-          <h2 className="text-lg font-medium mb-2">Mes informations</h2>
-          <p>
-            <strong>Nom :</strong> {dbUser?.nom}
-          </p>
-          <p>
-            <strong>Prénom :</strong> {dbUser?.prenom}
-          </p>
-          <p>
-            <strong>Phone :</strong> {dbUser?.phone}
-          </p>
-          <p>
-            <strong>Email :</strong> {dbUser?.email}
-          </p>
-          <p>
-            <strong>Rôle :</strong> {dbUser?.role}
-          </p>
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
+        {/* En-tête */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  Tableau de bord
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Bienvenue, {dbUser?.prenom} {dbUser?.nom}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Button onClick={() => goTo("users")} className="w-full py-6 text-lg">
-            Les utilisateurs
-          </Button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Cartes de statistiques */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {statCards.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-1">
+                        {stat.title}
+                      </p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {stat.value}
+                      </p>
+                    </div>
+                    <div className={`${stat.bgLight} p-3 rounded-lg`}>
+                      <Icon className={`${stat.textColor} w-8 h-8`} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-          <Button
-            onClick={() => goTo("drivers")}
-            className="w-full py-6 text-lg"
-          >
-            Les chauffeurs
-          </Button>
-
-          <Button onClick={() => goTo("bus")} className="w-full py-6 text-lg">
-            Les bus
-          </Button>
-
-          <Button
-            onClick={() => goTo("abonnements")}
-            className="w-full py-6 text-lg"
-          >
-            Les abonnements
-          </Button>
-
-          <Button
-            onClick={() => goTo("routes")}
-            className="w-full py-6 text-lg"
-          >
-            Suivi du trajet
-          </Button>
-
-          <Button
-            onClick={() => goTo("notifications")}
-            className="w-full py-6 text-lg"
-          >
-            Notifications
-          </Button>
-
-          <Button
-            onClick={() => goTo("profil")}
-            className="w-full py-6 text-lg"
-          >
-            Profil utilisateur
-          </Button>
-
-          {/* 🔹 Bouton de déconnexion */}
-          <Button
-            onClick={handleSignOut}
-            className="w-full py-6 text-lg bg-red-100 hover:bg-red-200 text-red-700"
-          >
-            Déconnexion
-          </Button>
+          {/* Informations utilisateur */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Mes informations
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-gray-100 p-2 rounded-lg">
+                  <User className="text-gray-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Nom complet</p>
+                  <p className="font-medium text-gray-900">
+                    {dbUser?.prenom} {dbUser?.nom}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-gray-100 p-2 rounded-lg">
+                  <Bell className="text-gray-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium text-gray-900">{dbUser?.email}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-gray-100 p-2 rounded-lg">
+                  <Users className="text-gray-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Téléphone</p>
+                  <p className="font-medium text-gray-900">{dbUser?.phone}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="bg-gray-100 p-2 rounded-lg">
+                  <UserCircle className="text-gray-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Rôle</p>
+                  <p className="font-medium text-gray-900">{dbUser?.role}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </ProtectedRoute>

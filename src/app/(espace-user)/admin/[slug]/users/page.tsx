@@ -81,16 +81,9 @@ const UserPage = () => {
     return matchesSearch && matchesRole;
   });
 
-  const usersByRole = {
-    total: users.length,
-    admin: users.filter((u) => u.role.toLowerCase() === "admin").length,
-    parent: users.filter((u) => u.role.toLowerCase() === "parent").length,
-    driver: users.filter((u) => u.role.toLowerCase() === "driver").length,
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">
@@ -102,7 +95,7 @@ const UserPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* En-tête */}
         <div className="mb-8">
@@ -112,65 +105,6 @@ const UserPage = () => {
           <p className="text-gray-600">
             Vue d&apos;ensemble de tous les utilisateurs de la plateforme
           </p>
-        </div>
-
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
-                  {usersByRole.total}
-                </p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Admins</p>
-                <p className="text-3xl font-bold text-purple-600 mt-1">
-                  {usersByRole.admin}
-                </p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Shield className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Parents</p>
-                <p className="text-3xl font-bold text-blue-600 mt-1">
-                  {usersByRole.parent}
-                </p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <UserCircle className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Chauffeurs</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">
-                  {usersByRole.driver}
-                </p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Users className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Filtres et recherche */}
@@ -240,7 +174,7 @@ const UserPage = () => {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="bg-gradient-to-br from-blue-100 to-purple-100 p-3 rounded-full mr-3">
+                        <div className="bg-linear-to-br from-blue-100 to-purple-100 p-3 rounded-full mr-3">
                           <UserCircle className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>

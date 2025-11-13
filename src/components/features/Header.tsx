@@ -45,7 +45,7 @@ export const Header = () => {
     const slug = makeSlug(dbUser.nom, dbUser.prenom);
 
     if (role === "ADMIN") {
-      router.push(`/admin/${slug}/dashboard`);
+      router.push(`/admin/${slug}/`);
     } else if (role === "PARENT") {
       router.push(`/parent/${slug}/`);
     } else if (role === "DRIVER") {

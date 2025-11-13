@@ -17,7 +17,7 @@
 import type React from "react";
 import { ProtectedRoute } from "@/app/context/protectedtoute";
 import { AuthProvider } from "@/app/context/provider";
-import { DashboardSidebar } from "@/components/driver-features/admin-sidebar-dashboard";
+import { DashboardSidebar } from "@/components/features/espace-features/admin-sidebar-dashboard";
 
 export default function DriverLayout({
   children,

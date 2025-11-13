@@ -89,7 +89,7 @@ const LoginPage = () => {
 
           setTimeout(() => {
             if (role === "ADMIN") {
-              router.push(`/admin/${data.slug}/dashboard`);
+              router.push(`/admin/${data.slug}/`);
             } else if (role === "PARENT") {
               router.push(`/parent/${data.slug}/`);
             } else if (role === "DRIVER") {

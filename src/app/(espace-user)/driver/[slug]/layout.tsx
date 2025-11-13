@@ -1,7 +1,7 @@
 import type React from "react";
 import { ProtectedRoute } from "@/app/context/protectedtoute";
 import { AuthProvider } from "@/app/context/provider";
-import { DashboardSidebar } from "@/components/driver-features/dashboard-sidebar";
+import { DashboardSidebar } from "@/components/features/espace-features/dashboard-sidebar";
 
 export default function DriverLayout({
   children,

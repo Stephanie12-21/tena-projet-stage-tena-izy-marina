@@ -92,7 +92,11 @@ export interface DriverProfile {
   userId: string;
   currentLat: number;
   currentLong: number;
-  imageId: string;
+  //imageId: string;
+  image: {
+    id: string;
+    url: string;
+  };
   license: {
     licenseNumber: string;
     licenseType: string;

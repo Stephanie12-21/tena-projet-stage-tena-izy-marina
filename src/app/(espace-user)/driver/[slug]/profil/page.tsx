@@ -32,7 +32,6 @@ const licenseSchema = z.object({
   licenseExpiration: z.string().min(1, "La date d'expiration est requise"),
 });
 
-// 🔹 Type helper
 type DbUserWithDriver = {
   id: string;
   prenom: string;
