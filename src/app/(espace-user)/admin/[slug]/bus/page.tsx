@@ -4,7 +4,20 @@ import { useAuth } from "@/app/context/provider";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, X } from "lucide-react";
+import {
+  Plus,
+  X,
+  MapPin,
+  Users,
+  Edit,
+  Trash2,
+  UserPlus,
+  Eye,
+  Bus as BusIcon,
+  MoreVertical,
+  School,
+  Home,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Bus, ChildWithRelations } from "@/lib/types/user-interface";
 import { deleteBusAction } from "@/app/actions/bus";
@@ -21,6 +34,7 @@ export default function BusesPage() {
   >([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalBusName, setModalBusName] = useState("");
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchBuses = async () => {
@@ -45,8 +59,6 @@ export default function BusesPage() {
               );
 
               const geoData = await geoRes.json();
-
-              // Affiche la réponse complète de Geoapify dans la console
               console.log("Geoapify response for bus", bus.id, geoData);
 
               const address =
@@ -63,7 +75,7 @@ export default function BusesPage() {
     };
 
     fetchBuses();
-    const intervalId = setInterval(fetchBuses, 10000); // refresh toutes les 10s
+    const intervalId = setInterval(fetchBuses, 10000);
 
     return () => clearInterval(intervalId);
   }, []);
@@ -95,18 +107,53 @@ export default function BusesPage() {
     }
   };
 
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      AVAILABLE: "bg-accent/20 text-accent border-accent/30",
+      IN_SERVICE: "bg-blue-500/20 text-blue-500 border-blue-500/30",
+      MAINTENANCE: "bg-orange-400/20 text-orange-400 border-orange-400/30",
+      OUT_OF_SERVICE:
+        "bg-destructive/20 text-destructive border-destructive/30",
+    };
+
+    const labels = {
+      AVAILABLE: "Disponible",
+      IN_SERVICE: "En service",
+      MAINTENANCE: "Maintenance",
+      OUT_OF_SERVICE: "Hors service",
+    };
+
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-xs font-medium border ${
+          styles[status as keyof typeof styles] ||
+          "bg-muted text-muted-foreground"
+        }`}
+      >
+        {labels[status as keyof typeof labels] || status}
+      </span>
+    );
+  };
+
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Chargement...</p>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-muted border-t-primary mx-auto"></div>
+          <p className="mt-6 text-muted-foreground font-medium">
+            Chargement...
+          </p>
+        </div>
       </div>
     );
 
   if (!dbUser)
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <Card className="p-8 text-center max-w-md">
-          <p>Vous devez être connecté pour voir vos bus.</p>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+        <Card className="p-8 text-center max-w-md border-border">
+          <p className="text-muted-foreground">
+            Vous devez être connecté pour voir vos bus.
+          </p>
         </Card>
       </div>
     );
@@ -114,117 +161,251 @@ export default function BusesPage() {
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8 flex justify-between items-center">
-          <h1 className="text-4xl font-bold">Liste des bus</h1>
-          <Button onClick={() => router.push("./bus/addnew")}>
-            <Plus className="w-4 h-4 mr-1" /> Ajouter un bus
-          </Button>
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <BusIcon className="w-6 h-6 text-primary" />
+                </div>
+                Gestion des bus
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {buses.length} bus{" "}
+                {buses.length > 1 ? "enregistrés" : "enregistré"}
+              </p>
+            </div>
+            <Button
+              onClick={() => router.push("./bus/addnew")}
+              size="lg"
+              className="gap-2"
+            >
+              <Plus className="w-4 h-4" /> Ajouter un bus
+            </Button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto border rounded-md">
-          <table className="w-full text-left">
-            <thead className="bg-gray-100 text-sm">
-              <tr>
-                <th className="p-3">Matricule</th>
-                <th className="p-3">Marque</th>
-                <th className="p-3">Places disponibles</th>
-                <th className="p-3">Statut</th>
-                <th className="p-3">Chauffeur</th>
-                <th className="p-3">Adresse actuelle</th>
-                <th className="p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {buses.map((bus) => (
-                <tr key={bus.id} className="border-t hover:bg-gray-50">
-                  <td className="p-3">{bus.matricule}</td>
-                  <td className="p-3">{bus.brand}</td>
-                  <td className="p-3">{bus.seats}</td>
-                  <td className="p-3">{bus.status}</td>
-                  <td className="p-3">
-                    {bus.driver
-                      ? `${bus.driver.nom} ${bus.driver.prenom}`
-                      : "—"}
-                  </td>
-                  <td className="p-3">
-                    {addresses[bus.id] || "Chargement..."}
-                  </td>
-                  <td className="p-3 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => router.push(`./bus/edit/${bus.id}`)}
-                    >
-                      Modifier
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(bus.id)}
-                    >
-                      Supprimer
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => router.push(`./bus/assign/${bus.id}`)}
-                    >
-                      Affecter élèves
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() =>
-                        handleViewPassengers(bus.id, bus.matricule)
-                      }
-                    >
-                      Voir les passagers
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-              {buses.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="text-center p-4 text-gray-500">
-                    Aucun bus trouvé.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {buses.map((bus) => (
+            <Card
+              key={bus.id}
+              className="p-6 border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+            >
+              {/* Card Header */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <BusIcon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-card-foreground">
+                      {bus.matricule}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{bus.brand}</p>
+                  </div>
+                </div>
+                {getStatusBadge(bus.status)}
+              </div>
+
+              {/* Info Section */}
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Places:</span>
+                  <span className="font-semibold text-card-foreground">
+                    {bus.seats}
+                  </span>
+                </div>
+
+                {bus.driver && (
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Chauffeur
+                    </p>
+                    <p className="font-medium text-card-foreground">
+                      {bus.driver.nom} {bus.driver.prenom}
+                    </p>
+                  </div>
+                )}
+
+                {addresses[bus.id] && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                    <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Position actuelle
+                      </p>
+                      <p className="text-sm text-card-foreground">
+                        {addresses[bus.id]}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-4 border-t border-border">
+                <Button
+                  size="sm"
+                  onClick={() => router.push(`./bus/assign/${bus.id}`)}
+                  className="flex-1 gap-2 bg-primary hover:bg-primary/90"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Affecter élèves
+                </Button>
+
+                <div className="relative">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      setActiveDropdown(
+                        activeDropdown === bus.id ? null : bus.id
+                      )
+                    }
+                    className="px-3"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+
+                  {/* Dropdown Menu */}
+                  {activeDropdown === bus.id && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setActiveDropdown(null)}
+                      />
+                      <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <button
+                          onClick={() => {
+                            router.push(`./bus/edit/${bus.id}`);
+                            setActiveDropdown(null);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-card-foreground hover:bg-muted transition-colors"
+                        >
+                          <Edit className="w-4 h-4 text-muted-foreground" />
+                          <span>Modifier le bus</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            handleViewPassengers(bus.id, bus.matricule);
+                            setActiveDropdown(null);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-card-foreground hover:bg-muted transition-colors"
+                        >
+                          <Eye className="w-4 h-4 text-muted-foreground" />
+                          <span>Voir les passagers</span>
+                        </button>
+
+                        <div className="h-px bg-border my-1" />
+
+                        <button
+                          onClick={() => {
+                            handleDelete(bus.id);
+                            setActiveDropdown(null);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Supprimer</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+
+          {buses.length === 0 && (
+            <div className="col-span-full">
+              <Card className="p-12 text-center border-border border-dashed">
+                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <BusIcon className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold text-card-foreground mb-2">
+                  Aucun bus trouvé
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  Commencez par ajouter votre premier bus
+                </p>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Modal pour passagers */}
         {modalOpen && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded shadow-lg max-w-lg w-full relative">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-card border border-border p-6 rounded-2xl shadow-2xl max-w-2xl w-full relative animate-in fade-in zoom-in duration-200">
               <button
-                className="absolute top-2 right-2"
+                className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
                 onClick={() => setModalOpen(false)}
               >
-                <X size={20} />
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
-              <h2 className="text-xl font-bold mb-4">
-                Passagers du bus {modalBusName}
-              </h2>
+
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-card-foreground">
+                    Passagers du bus
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {modalBusName}
+                  </p>
+                </div>
+              </div>
+
               {selectedBusChildren.length === 0 ? (
-                <p>Aucun passager pour ce bus.</p>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-muted-foreground">
+                    Aucun passager pour ce bus.
+                  </p>
+                </div>
               ) : (
-                <ul className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-3 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
                   {selectedBusChildren.map((child) => (
-                    <li
+                    <div
                       key={child.id}
-                      className="border p-2 rounded flex flex-col"
+                      className="border border-border p-4 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <span className="font-semibold">
-                        {child.prenom} {child.nom}
-                      </span>
-                      <span>Adresse : {child.adresse}</span>
-                      <span>
-                        École : {child.school.nom} - {child.school.adresse}
-                      </span>
-                    </li>
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Users className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-card-foreground mb-1">
+                            {child.prenom} {child.nom}
+                          </p>
+                          <div className="space-y-1">
+                            <div className="flex items-start gap-2 text-sm">
+                              <Home className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                              <span className="text-muted-foreground truncate">
+                                Domicile : {child.adresse}
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-2 text-sm">
+                              <School className="w-3 h-3 text-muted-foreground mt-0.5 shrink-0" />
+                              <span className="text-muted-foreground">
+                                Ecole : {child.school.nom} -{" "}
+                                {child.school.adresse}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           </div>
