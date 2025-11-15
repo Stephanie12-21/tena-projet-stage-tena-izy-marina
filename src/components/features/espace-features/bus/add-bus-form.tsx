@@ -15,15 +15,15 @@ import {
 import { Driver } from "@/lib/types/user-interface";
 import { createBusAction } from "@/app/actions/bus";
 import { toast } from "react-toastify";
-import { BusStatus } from "../../../../generated/prisma";
+import { BusStatus } from "../../../../../generated/prisma";
 
 export default function AddBusForm({ onSuccess }: { onSuccess?: () => void }) {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [driverId, setDriverId] = useState("");
   const [status, setStatus] = useState<BusStatus>(BusStatus.ACTIF);
 
-  const [loadingDrivers, setLoadingDrivers] = useState(true); // 👈 loading fetch chauffeurs
-  const [submitting, setSubmitting] = useState(false); // 👈 loading soumission
+  const [loadingDrivers, setLoadingDrivers] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchDrivers = async () => {

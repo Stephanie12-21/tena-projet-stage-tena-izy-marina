@@ -27,9 +27,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Bus, ChildWithRelations } from "@/lib/types/user-interface";
-import { deleteBusAction } from "@/app/actions/bus";
 import { toast, ToastContainer } from "react-toastify";
-import AddBusForm from "@/components/features/espace-features/add-bus-form";
+import EditBusForm from "@/components/features/espace-features/bus/edit-bus-form";
+import AddBusForm from "@/components/features/espace-features/bus/add-bus-form";
+import DeleteBusForm from "@/components/features/espace-features/bus/delete-bus-form";
 
 export default function BusesPage() {
   const { dbUser, loading } = useAuth();
@@ -44,6 +45,11 @@ export default function BusesPage() {
   const [modalBusName, setModalBusName] = useState("");
   const [open, setOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editBus, setEditBus] = useState<Bus | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteBus, setDeleteBus] = useState<Bus | null>(null);
+
   const fetchBuses = async () => {
     try {
       const res = await fetch("/api/bus");
@@ -87,18 +93,6 @@ export default function BusesPage() {
     return () => clearInterval(intervalId);
   }, []);
 
-  const handleDelete = async (busId: string) => {
-    if (!confirm("Voulez-vous vraiment supprimer ce bus ?")) return;
-    try {
-      const res = await deleteBusAction(busId);
-      if (!res.success) throw new Error(res.message);
-      setBuses(buses.filter((b) => b.id !== busId));
-      toast.success("Bus supprimé avec succès !");
-    } catch (error) {
-      console.error(error);
-      toast.error("Impossible de supprimer le bus.");
-    }
-  };
 
   const handleViewPassengers = async (id: string, busName: string) => {
     try {
@@ -174,13 +168,7 @@ export default function BusesPage() {
                 Gestion des bus
               </h1>
             </div>
-            {/* <Button
-              onClick={() => router.push("./bus/addnew")}
-              size="lg"
-              className="gap-2"
-            >
-              <Plus className="w-4 h-4" /> Ajouter un bus
-            </Button> */}
+
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
@@ -300,7 +288,8 @@ export default function BusesPage() {
                       <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                         <button
                           onClick={() => {
-                            router.push(`./bus/edit/${bus.id}`);
+                            setEditBus(bus);
+                            setEditOpen(true);
                             setActiveDropdown(null);
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-card-foreground hover:bg-muted transition-colors"
@@ -324,10 +313,11 @@ export default function BusesPage() {
 
                         <button
                           onClick={() => {
-                            handleDelete(bus.id);
+                            setDeleteBus(bus); // bus sélectionné
+                            setDeleteOpen(true); // ouverture modale
                             setActiveDropdown(null);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                           <span>Supprimer</span>
@@ -430,6 +420,44 @@ export default function BusesPage() {
             </div>
           </div>
         )}
+
+        {/* ---------------- MODAL EDIT BUS ---------------- */}
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Modifier le bus</DialogTitle>
+            </DialogHeader>
+
+            {editBus && (
+              <EditBusForm
+                bus={editBus}
+                onSuccess={() => {
+                  setEditOpen(false);
+                  fetchBuses(); // refresh liste
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* ---------------- MODAL DELETE BUS ---------------- */}
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <DialogContent className="max-w-md bg-card rounded-xl shadow-2xl">
+            <DialogHeader>
+              <DialogTitle>Supprimer le bus</DialogTitle>
+            </DialogHeader>
+
+            {deleteBus && (
+              <DeleteBusForm
+                bus={deleteBus}
+                onSuccess={() => {
+                  setDeleteOpen(false);
+                  fetchBuses(); // refresh liste
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         <ToastContainer
           position="top-right"
