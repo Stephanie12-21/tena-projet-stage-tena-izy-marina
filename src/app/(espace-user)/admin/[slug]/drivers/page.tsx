@@ -29,7 +29,7 @@ import {
   X,
 } from "lucide-react";
 import { Driver } from "@/lib/types/user-interface";
-import InviteDriverForm from "@/components/features/espace-features/invite-drive-form";
+import InviteDriverForm from "@/components/features/espace-features/invite-driver-form";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Image from "next/image";
@@ -45,7 +45,6 @@ export default function DriversPage() {
   const [licenseTypeFilter, setLicenseTypeFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
 
-  // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 

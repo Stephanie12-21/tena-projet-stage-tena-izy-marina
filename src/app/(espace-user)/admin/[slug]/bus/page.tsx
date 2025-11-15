@@ -3,6 +3,13 @@
 import { useAuth } from "@/app/context/provider";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import {
   Plus,
@@ -22,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { Bus, ChildWithRelations } from "@/lib/types/user-interface";
 import { deleteBusAction } from "@/app/actions/bus";
 import { toast, ToastContainer } from "react-toastify";
+import AddBusForm from "@/components/features/espace-features/add-bus-form";
 
 export default function BusesPage() {
   const { dbUser, loading } = useAuth();
@@ -34,46 +42,45 @@ export default function BusesPage() {
   >([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalBusName, setModalBusName] = useState("");
+  const [open, setOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const fetchBuses = async () => {
+    try {
+      const res = await fetch("/api/bus");
+      if (!res.ok) throw new Error("Erreur API /api/bus");
+      const data = await res.json();
+      const busArray = Array.isArray(data.buses) ? data.buses : data;
+      setBuses(busArray);
 
-  useEffect(() => {
-    const fetchBuses = async () => {
-      try {
-        const res = await fetch("/api/bus");
-        if (!res.ok) throw new Error("Erreur API /api/bus");
-        const data = await res.json();
-        const busArray = Array.isArray(data.buses) ? data.buses : data;
-        setBuses(busArray);
+      for (const bus of busArray) {
+        if (
+          bus.driver?.driverProfile?.currentLat != null &&
+          bus.driver?.driverProfile?.currentLong != null
+        ) {
+          const lat = bus.driver.driverProfile.currentLat;
+          const lon = bus.driver.driverProfile.currentLong;
 
-        for (const bus of busArray) {
-          if (
-            bus.driver?.driverProfile?.currentLat != null &&
-            bus.driver?.driverProfile?.currentLong != null
-          ) {
-            const lat = bus.driver.driverProfile.currentLat;
-            const lon = bus.driver.driverProfile.currentLong;
+          try {
+            const geoRes = await fetch(
+              `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&format=json&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_KEY}`
+            );
 
-            try {
-              const geoRes = await fetch(
-                `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lon}&format=json&apiKey=${process.env.NEXT_PUBLIC_GEOAPIFY_KEY}`
-              );
+            const geoData = await geoRes.json();
+            console.log("Geoapify response for bus", bus.id, geoData);
 
-              const geoData = await geoRes.json();
-              console.log("Geoapify response for bus", bus.id, geoData);
-
-              const address =
-                geoData.results?.[0]?.formatted || "Adresse inconnue";
-              setAddresses((prev) => ({ ...prev, [bus.id]: address }));
-            } catch (err) {
-              console.error("Erreur Geoapify:", err);
-            }
+            const address =
+              geoData.results?.[0]?.formatted || "Adresse inconnue";
+            setAddresses((prev) => ({ ...prev, [bus.id]: address }));
+          } catch (err) {
+            console.error("Erreur Geoapify:", err);
           }
         }
-      } catch (error) {
-        console.error("Erreur fetch buses :", error);
       }
-    };
-
+    } catch (error) {
+      console.error("Erreur fetch buses :", error);
+    }
+  };
+  useEffect(() => {
     fetchBuses();
     const intervalId = setInterval(fetchBuses, 10000);
 
@@ -109,18 +116,13 @@ export default function BusesPage() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      AVAILABLE: "bg-accent/20 text-accent border-accent/30",
-      IN_SERVICE: "bg-blue-500/20 text-blue-500 border-blue-500/30",
+      ACTIF: "bg-blue-500/20 text-blue-500 border-blue-500/30",
       MAINTENANCE: "bg-orange-400/20 text-orange-400 border-orange-400/30",
-      OUT_OF_SERVICE:
-        "bg-destructive/20 text-destructive border-destructive/30",
     };
 
     const labels = {
-      AVAILABLE: "Disponible",
-      IN_SERVICE: "En service",
+      ACTIF: "En service",
       MAINTENANCE: "Maintenance",
-      OUT_OF_SERVICE: "Hors service",
     };
 
     return (
@@ -171,18 +173,34 @@ export default function BusesPage() {
                 </div>
                 Gestion des bus
               </h1>
-              <p className="text-muted-foreground mt-2">
-                {buses.length} bus{" "}
-                {buses.length > 1 ? "enregistrés" : "enregistré"}
-              </p>
             </div>
-            <Button
+            {/* <Button
               onClick={() => router.push("./bus/addnew")}
               size="lg"
               className="gap-2"
             >
               <Plus className="w-4 h-4" /> Ajouter un bus
-            </Button>
+            </Button> */}
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Ajouter un chauffeur
+                </Button>
+              </DialogTrigger>
+
+              <DialogContent className="max-w-lg bg-card rounded-xl shadow-2xl">
+                <DialogHeader>
+                  <DialogTitle>Ajouter un nouveau bus</DialogTitle>
+                </DialogHeader>
+                <AddBusForm
+                  onSuccess={() => {
+                    setOpen(false);
+                    fetchBuses();
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -213,7 +231,9 @@ export default function BusesPage() {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center gap-2 text-sm">
                   <Users className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Places:</span>
+                  <span className="text-muted-foreground">
+                    Places disponibles:
+                  </span>
                   <span className="font-semibold text-card-foreground">
                     {bus.seats}
                   </span>
@@ -265,7 +285,7 @@ export default function BusesPage() {
                         activeDropdown === bus.id ? null : bus.id
                       )
                     }
-                    className="px-3"
+                    className="px-3 hover: bg-transparent"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </Button>
