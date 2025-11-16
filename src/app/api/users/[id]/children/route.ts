@@ -7,8 +7,9 @@ export async function GET(
 ) {
   const { id } = await context.params;
 
-  if (!id)
+  if (!id) {
     return NextResponse.json({ error: "Parent ID manquant" }, { status: 400 });
+  }
 
   try {
     const children = await prisma.children.findMany({
@@ -17,8 +18,22 @@ export async function GET(
         school: true,
         imageprofile: true,
         subscription: true,
+        bus: {
+          include: {
+            driver: true,
+          },
+        },
+        scanLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          include: {
+            bus: true,
+            driver: true,
+          },
+        },
       },
     });
+
     return NextResponse.json(children);
   } catch (err) {
     console.error(err);

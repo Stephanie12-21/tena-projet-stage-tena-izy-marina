@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { uploadToCloudinary } from "@/app/actions/upload";
 import { createChild } from "@/app/actions/children";
 import { useAuth } from "@/app/context/provider";
+import { Home, School, Clock, Upload } from "lucide-react";
 
 interface GeoapifyFeature {
   properties: {
@@ -34,7 +35,7 @@ interface FormData {
   schoolLat: number;
   schoolLong: number;
   file: File | null;
-  arrivalTime: string; // ⬅️ nouveau
+  arrivalTime: string;
   departureTime: string;
 }
 
@@ -54,7 +55,7 @@ export default function CreateChildPage() {
     schoolLat: 0,
     schoolLong: 0,
     file: null,
-    arrivalTime: "", // ⬅️
+    arrivalTime: "",
     departureTime: "",
   });
 
@@ -66,7 +67,6 @@ export default function CreateChildPage() {
   const debounceRefChild = useRef<NodeJS.Timeout | null>(null);
   const debounceRefSchool = useRef<NodeJS.Timeout | null>(null);
 
-  // 🔹 Fonction générique pour modifier le state
   const handleChange = <K extends keyof FormData>(
     field: K,
     value: FormData[K]
@@ -74,7 +74,6 @@ export default function CreateChildPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // 🔹 Suggestions Geoapify
   const fetchSuggestions = async (
     query: string,
     setSuggestions: React.Dispatch<React.SetStateAction<Suggestion[]>>
@@ -192,8 +191,8 @@ export default function CreateChildPage() {
         schoolAddress: formData.schoolAddress,
         schoolLat: formData.schoolLat,
         schoolLong: formData.schoolLong,
-        arrivalTime: formData.arrivalTime, // ⬅️ ajouté
-        departureTime: formData.departureTime, // ⬅️ ajouté
+        arrivalTime: formData.arrivalTime,
+        departureTime: formData.departureTime,
       });
 
       toast.success("Enfant créé avec succès !");
@@ -207,127 +206,253 @@ export default function CreateChildPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="p-8 max-w-lg w-full">
-        <h1 className="text-2xl font-bold mb-6">Créer un nouvel enfant</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label>Prénom</Label>
-            <Input
-              value={formData.prenomEnfant}
-              onChange={(e) => handleChange("prenomEnfant", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label>Nom</Label>
-            <Input
-              value={formData.nomEnfant}
-              onChange={(e) => handleChange("nomEnfant", e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Photo</Label>
-            <Input type="file" accept="image/*" onChange={handlePhotoChange} />
-            {preview && (
-              <Image
-                width={50}
-                height={50}
-                src={preview}
-                alt="Aperçu"
-                className="w-16 h-16 object-cover rounded-lg border shadow-sm"
-              />
-            )}
-          </div>
-          <div className="relative">
-            <Label>Adresse enfant</Label>
-            <Input
-              value={formData.adresse}
-              onChange={handleChildAddressChange}
-              autoComplete="off"
-              required
-            />
-            {childSuggestions.length > 0 && (
-              <ul className="absolute z-20 w-full bg-white border rounded-lg shadow-md mt-1 max-h-48 overflow-y-auto">
-                {childSuggestions.map((s, i) => (
-                  <li
-                    key={i}
-                    className="p-2 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSelectChildSuggestion(s)}
-                  >
-                    {s.formatted}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <Label>Nom École</Label>
-            <Input
-              value={formData.schoolName}
-              onChange={(e) => handleChange("schoolName", e.target.value)}
-              required
-            />
-          </div>
-          <div className="relative">
-            <Label>Adresse École</Label>
-            <Input
-              value={formData.schoolAddress}
-              onChange={handleSchoolAddressChange}
-              autoComplete="off"
-              required
-            />
-            {schoolSuggestions.length > 0 && (
-              <ul className="absolute z-20 w-full bg-white border rounded-lg shadow-md mt-1 max-h-48 overflow-y-auto">
-                {schoolSuggestions.map((s, i) => (
-                  <li
-                    key={i}
-                    className="p-2 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSelectSchoolSuggestion(s)}
-                  >
-                    {s.formatted}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <div>
-            <Label>Heure d&apos;arrivée à l&apos;école</Label>
-            <Input
-              type="time"
-              value={formData.arrivalTime}
-              onChange={(e) => handleChange("arrivalTime", e.target.value)}
-              required
-            />
+    <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Ajouter un enfant
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Remplissez les informations de l&apos;enfant
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Colonne gauche - Informations personnelles */}
+            <Card className="p-6">
+              <div className="space-y-6">
+                {/* Photo de profil */}
+                <div className="flex justify-center">
+                  <div className="text-center">
+                    {preview ? (
+                      <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-border mx-auto mb-3">
+                        <Image
+                          src={preview}
+                          alt="Aperçu"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-border mx-auto mb-3">
+                        <Upload className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <Label className="cursor-pointer text-sm text-primary hover:underline">
+                      {preview ? "Changer la photo" : "Ajouter une photo"}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Identité */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Home className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Informations personnelles
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Prénom *
+                      </Label>
+                      <Input
+                        value={formData.prenomEnfant}
+                        onChange={(e) =>
+                          handleChange("prenomEnfant", e.target.value)
+                        }
+                        className="mt-1.5"
+                        placeholder="Jean"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Nom *
+                      </Label>
+                      <Input
+                        value={formData.nomEnfant}
+                        onChange={(e) =>
+                          handleChange("nomEnfant", e.target.value)
+                        }
+                        className="mt-1.5"
+                        placeholder="Dupont"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Adresse domicile */}
+                <div className="border-t border-border pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Home className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Domicile
+                    </h3>
+                  </div>
+                  <div className="relative">
+                    <Label className="text-sm text-muted-foreground">
+                      Adresse *
+                    </Label>
+                    <Input
+                      value={formData.adresse}
+                      onChange={handleChildAddressChange}
+                      autoComplete="off"
+                      className="mt-1.5"
+                      placeholder="12 rue de la Paix, Paris"
+                      required
+                    />
+                    {childSuggestions.length > 0 && (
+                      <ul className="absolute z-20 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                        {childSuggestions.map((s, i) => (
+                          <li
+                            key={i}
+                            className="p-3 cursor-pointer hover:bg-muted transition-colors text-sm"
+                            onClick={() => handleSelectChildSuggestion(s)}
+                          >
+                            {s.formatted}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Colonne droite - École et horaires */}
+            <Card className="p-6">
+              <div className="space-y-6">
+                {/* École */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <School className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      École
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Nom de l&apos;école *
+                      </Label>
+                      <Input
+                        value={formData.schoolName}
+                        onChange={(e) =>
+                          handleChange("schoolName", e.target.value)
+                        }
+                        className="mt-1.5"
+                        placeholder="École primaire Jean Moulin"
+                        required
+                      />
+                    </div>
+                    <div className="relative">
+                      <Label className="text-sm text-muted-foreground">
+                        Adresse *
+                      </Label>
+                      <Input
+                        value={formData.schoolAddress}
+                        onChange={handleSchoolAddressChange}
+                        autoComplete="off"
+                        className="mt-1.5"
+                        placeholder="45 avenue des Écoles, Paris"
+                        required
+                      />
+                      {schoolSuggestions.length > 0 && (
+                        <ul className="absolute z-20 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                          {schoolSuggestions.map((s, i) => (
+                            <li
+                              key={i}
+                              className="p-3 cursor-pointer hover:bg-muted transition-colors text-sm"
+                              onClick={() => handleSelectSchoolSuggestion(s)}
+                            >
+                              {s.formatted}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Horaires */}
+                <div className="border-t border-border pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Horaires
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Arrivée à l&apos;école *
+                      </Label>
+                      <Input
+                        type="time"
+                        value={formData.arrivalTime}
+                        onChange={(e) =>
+                          handleChange("arrivalTime", e.target.value)
+                        }
+                        className="mt-1.5"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Départ de l&apos;école *
+                      </Label>
+                      <Input
+                        type="time"
+                        value={formData.departureTime}
+                        onChange={(e) =>
+                          handleChange("departureTime", e.target.value)
+                        }
+                        className="mt-1.5"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </div>
 
-          <div>
-            <Label>Heure de départ de l&apos;école</Label>
-            <Input
-              type="time"
-              value={formData.departureTime}
-              onChange={(e) => handleChange("departureTime", e.target.value)}
-              required
-            />
+          {/* Actions en bas */}
+          <div className="flex gap-3 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              className="flex-1"
+              disabled={saving}
+            >
+              Annuler
+            </Button>
+            <Button type="submit" disabled={saving} className="flex-1">
+              {saving ? "Création en cours..." : "Créer l'enfant"}
+            </Button>
           </div>
-
-          <Button type="submit" disabled={saving}>
-            {saving ? "Création en cours..." : "Créer l'enfant"}
-          </Button>
         </form>
-      </Card>
+      </div>
+
       <ToastContainer
         position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
+        autoClose={3000}
+        hideProgressBar
         closeOnClick
         pauseOnHover
-        toastStyle={{
-          width: "500px",
-        }}
-      />{" "}
+      />
     </div>
   );
 }

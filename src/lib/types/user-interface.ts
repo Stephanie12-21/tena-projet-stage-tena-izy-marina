@@ -2,6 +2,7 @@ import {
   BusStatus,
   Children,
   Image,
+  ScanLog,
   School,
   Users,
 } from "../../../generated/prisma";
@@ -33,6 +34,8 @@ export type ChildWithRelations = Children & {
   school: School;
   imageprofile: Image;
   parent: Users;
+  bus?: Bus;
+  scanLogs?: ScanLog[];
 };
 
 // ------------------- INPUTS -------------------

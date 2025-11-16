@@ -15,6 +15,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { uploadToCloudinary } from "@/app/actions/upload";
 import { updateChild } from "@/app/actions/children";
+import { Home, School, Clock, Upload } from "lucide-react";
 
 interface GeoapifyFeature {
   properties: {
@@ -23,10 +24,11 @@ interface GeoapifyFeature {
     lon: number;
   };
 }
+
 interface EditableChild extends ChildWithRelations {
-  file?: File; // champ temporaire pour l'image locale
-  arrivalTime: string; // ⬅️ ajouté
-  departureTime: string; // ⬅️ ajouté
+  file?: File;
+  arrivalTime: string;
+  departureTime: string;
 }
 
 export default function EditChildPage() {
@@ -44,17 +46,12 @@ export default function EditChildPage() {
   const [schoolSuggestions, setSchoolSuggestions] = useState<
     { formatted: string; lat: number; lon: number }[]
   >([]);
-  const [isLoadingChildSuggestions, setIsLoadingChildSuggestions] =
-    useState(false);
-  const [isLoadingSchoolSuggestions, setIsLoadingSchoolSuggestions] =
-    useState(false);
 
   const debounceRefChild = useRef<NodeJS.Timeout | null>(null);
   const debounceRefSchool = useRef<NodeJS.Timeout | null>(null);
 
   const apiKey = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
 
-  // 🔹 Charger les données de l’enfant
   useEffect(() => {
     if (!id) return;
 
@@ -80,7 +77,6 @@ export default function EditChildPage() {
     fetchChild();
   }, [id]);
 
-  //  Gérer les changements de champs texte
   const handleChange = <K extends keyof ChildWithRelations>(
     field: K,
     value: ChildWithRelations[K]
@@ -88,19 +84,16 @@ export default function EditChildPage() {
     setChild((prev) => (prev ? { ...prev, [field]: value } : prev));
   };
 
-  //  Auto-suggestions d’adresses
   const fetchSuggestions = async (
     query: string,
     setSuggestions: React.Dispatch<
       React.SetStateAction<{ formatted: string; lat: number; lon: number }[]>
-    >,
-    setLoading: React.Dispatch<React.SetStateAction<boolean>>
+    >
   ) => {
     if (!query || query.length < 3) {
       setSuggestions([]);
       return;
     }
-    setLoading(true);
     try {
       const res = await fetch(
         `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(
@@ -120,24 +113,16 @@ export default function EditChildPage() {
     } catch (err) {
       console.error(err);
       toast.error("Erreur lors de la récupération des suggestions.");
-    } finally {
-      setLoading(false);
     }
   };
 
-  //  Gestion adresse enfant
   const handleChildAddressChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     handleChange("adresse", value);
 
     if (debounceRefChild.current) clearTimeout(debounceRefChild.current);
     debounceRefChild.current = setTimeout(
-      () =>
-        fetchSuggestions(
-          value,
-          setChildSuggestions,
-          setIsLoadingChildSuggestions
-        ),
+      () => fetchSuggestions(value, setChildSuggestions),
       500
     );
   };
@@ -153,7 +138,6 @@ export default function EditChildPage() {
     setChildSuggestions([]);
   };
 
-  //  Gestion adresse école
   const handleSchoolAddressChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setChild((prev) =>
@@ -162,12 +146,7 @@ export default function EditChildPage() {
 
     if (debounceRefSchool.current) clearTimeout(debounceRefSchool.current);
     debounceRefSchool.current = setTimeout(
-      () =>
-        fetchSuggestions(
-          value,
-          setSchoolSuggestions,
-          setIsLoadingSchoolSuggestions
-        ),
+      () => fetchSuggestions(value, setSchoolSuggestions),
       500
     );
   };
@@ -193,12 +172,10 @@ export default function EditChildPage() {
     setSchoolSuggestions([]);
   };
 
-  // Gestion de l'image
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !child) return;
 
-    // ✅ ajoute le fichier dans le state typé
     setChild((prev) => (prev ? { ...prev, file } : prev));
 
     const reader = new FileReader();
@@ -206,10 +183,8 @@ export default function EditChildPage() {
     reader.readAsDataURL(file);
   };
 
-  // Fonction de modification
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("=== handleSubmit déclenché ===");
 
     if (!child) {
       toast.error("Aucun enfant chargé !");
@@ -220,7 +195,7 @@ export default function EditChildPage() {
 
     try {
       let imageUrl = child.imageprofile?.url || "";
-      const file = child.file; // ✅ plus d'erreur ici
+      const file = child.file;
 
       if (!file && !imageUrl) {
         toast.warning("Vous devez fournir une photo de l'enfant !");
@@ -228,21 +203,20 @@ export default function EditChildPage() {
         return;
       }
 
-      // Upload si nouveau fichier
       if (file) {
-        toast.info(" Upload de la photo en cours...");
+        toast.info("📤 Upload de la photo en cours...");
         const arrayBuffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
         const uploadedUrl = await uploadToCloudinary(uint8Array);
 
         if (!uploadedUrl) {
-          toast.error(" Échec de l'upload de la photo.");
+          toast.error("❌ Échec de l'upload de la photo.");
           setSaving(false);
           return;
         }
 
         imageUrl = uploadedUrl;
-        toast.success(" Photo uploadée avec succès !");
+        toast.success("✅ Photo uploadée avec succès !");
       }
 
       const updatedData: UpdateChildInput = {
@@ -264,212 +238,274 @@ export default function EditChildPage() {
       toast.info("Mise à jour de l'enfant en cours...");
       await updateChild(updatedData);
 
-      toast.success("Enfant modifié avec succès !");
+      toast.success("✅ Enfant modifié avec succès !");
       setTimeout(() => {
         router.back();
-      }, 3000);
+      }, 2000);
     } catch (err) {
-      console.error(" Erreur lors de la mise à jour :", err);
+      console.error("❌ Erreur lors de la mise à jour :", err);
       toast.error("Une erreur est survenue pendant la mise à jour.");
     } finally {
       setSaving(false);
-      console.log("=== handleSubmit terminé ===");
     }
   };
 
-  // 🔹 Rendu du composant
-  if (loading) return <p>Chargement...</p>;
-  if (!child) return <p>Enfant introuvable.</p>;
+  if (loading) return <p className="text-center py-8">Chargement...</p>;
+  if (!child) return <p className="text-center py-8">Enfant introuvable.</p>;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6">
-      <Card className="p-8 max-w-lg w-full">
-        <h1 className="text-2xl font-bold mb-6">Modifier l&apos;enfant</h1>
+    <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Modifier l&apos;enfant
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Modifiez les informations de l&apos;enfant
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Prénom */}
-          <div>
-            <Label>Prénom</Label>
-            <Input
-              value={child.prenom}
-              onChange={(e) => handleChange("prenom", e.target.value)}
-              required
-            />
-          </div>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Colonne gauche - Informations personnelles */}
+            <Card className="p-6">
+              <div className="space-y-6">
+                {/* Photo de profil */}
+                <div className="flex justify-center">
+                  <div className="text-center">
+                    {preview ? (
+                      <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-border mx-auto mb-3">
+                        <Image
+                          src={preview}
+                          alt="Aperçu"
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center border-2 border-dashed border-border mx-auto mb-3">
+                        <Upload className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <Label className="cursor-pointer text-sm text-primary hover:underline">
+                      {preview ? "Changer la photo" : "Ajouter une photo"}
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                    </Label>
+                  </div>
+                </div>
 
-          {/* Nom */}
-          <div>
-            <Label>Nom</Label>
-            <Input
-              value={child.nom}
-              onChange={(e) => handleChange("nom", e.target.value)}
-              required
-            />
-          </div>
+                {/* Identité */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Home className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Informations personnelles
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Prénom *
+                      </Label>
+                      <Input
+                        value={child.prenom}
+                        onChange={(e) => handleChange("prenom", e.target.value)}
+                        className="mt-1.5"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Nom *
+                      </Label>
+                      <Input
+                        value={child.nom}
+                        onChange={(e) => handleChange("nom", e.target.value)}
+                        className="mt-1.5"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
 
-          {/* Photo */}
-          <div className="space-y-2">
-            <Label>Photo de l&apos;enfant</Label>
-            <div className="flex items-center gap-4">
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoChange}
-              />
-              {preview && (
-                <Image
-                  width={50}
-                  height={50}
-                  src={preview}
-                  alt="Aperçu"
-                  className="w-16 h-16 object-cover rounded-lg border shadow-sm"
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Adresse enfant */}
-          <div className="relative">
-            <Label>Adresse</Label>
-            <Input
-              value={child.adresse}
-              onChange={handleChildAddressChange}
-              autoComplete="off"
-              required
-            />
-            {isLoadingChildSuggestions && (
-              <div className="absolute top-10 right-2 text-gray-500 text-sm">
-                Chargement...
+                {/* Adresse domicile */}
+                <div className="border-t border-border pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Home className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Domicile
+                    </h3>
+                  </div>
+                  <div className="relative">
+                    <Label className="text-sm text-muted-foreground">
+                      Adresse *
+                    </Label>
+                    <Input
+                      value={child.adresse}
+                      onChange={handleChildAddressChange}
+                      autoComplete="off"
+                      className="mt-1.5"
+                      required
+                    />
+                    {childSuggestions.length > 0 && (
+                      <ul className="absolute z-20 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                        {childSuggestions.map((s, i) => (
+                          <li
+                            key={i}
+                            className="p-3 cursor-pointer hover:bg-muted transition-colors text-sm"
+                            onClick={() => handleSelectChildSuggestion(s)}
+                          >
+                            {s.formatted}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-            {childSuggestions.length > 0 && (
-              <ul className="absolute z-20 w-full bg-white border rounded-lg shadow-md mt-1 max-h-48 overflow-y-auto">
-                {childSuggestions.map((s, i) => (
-                  <li
-                    key={i}
-                    className="p-2 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSelectChildSuggestion(s)}
-                  >
-                    {s.formatted}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+            </Card>
 
-          {/* Coordonnées enfant */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Latitude</Label>
-              <Input type="number" value={child.homeLat} disabled />
-            </div>
-            <div>
-              <Label>Longitude</Label>
-              <Input type="number" value={child.homeLong} disabled />
-            </div>
-          </div>
+            {/* Colonne droite - École et horaires */}
+            <Card className="p-6">
+              <div className="space-y-6">
+                {/* École */}
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <School className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      École
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Nom de l&apos;école *
+                      </Label>
+                      <Input
+                        value={child.school?.nom || ""}
+                        onChange={(e) =>
+                          setChild((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  school: {
+                                    ...prev.school!,
+                                    nom: e.target.value,
+                                  },
+                                }
+                              : prev
+                          )
+                        }
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Label className="text-sm text-muted-foreground">
+                        Adresse *
+                      </Label>
+                      <Input
+                        value={child.school?.adresse || ""}
+                        onChange={handleSchoolAddressChange}
+                        autoComplete="off"
+                        className="mt-1.5"
+                      />
+                      {schoolSuggestions.length > 0 && (
+                        <ul className="absolute z-20 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+                          {schoolSuggestions.map((s, i) => (
+                            <li
+                              key={i}
+                              className="p-3 cursor-pointer hover:bg-muted transition-colors text-sm"
+                              onClick={() => handleSelectSchoolSuggestion(s)}
+                            >
+                              {s.formatted}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-          {/* École */}
-          <div>
-            <Label>Nom École</Label>
-            <Input
-              value={child.school?.nom || ""}
-              onChange={(e) =>
-                setChild((prev) =>
-                  prev
-                    ? {
-                        ...prev,
-                        school: { ...prev.school!, nom: e.target.value },
-                      }
-                    : prev
-                )
-              }
-            />
-            {isLoadingSchoolSuggestions && (
-              <div className="absolute top-10 right-2 text-gray-500 text-sm">
-                Chargement...
+                {/* Horaires */}
+                <div className="border-t border-border pt-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Horaires
+                    </h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Arrivée à l&apos;école *
+                      </Label>
+                      <Input
+                        type="time"
+                        value={child.arrivalTime || ""}
+                        onChange={(e) =>
+                          setChild((prev) =>
+                            prev
+                              ? { ...prev, arrivalTime: e.target.value }
+                              : prev
+                          )
+                        }
+                        className="mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">
+                        Départ de l&apos;école *
+                      </Label>
+                      <Input
+                        type="time"
+                        value={child.departureTime || ""}
+                        onChange={(e) =>
+                          setChild((prev) =>
+                            prev
+                              ? { ...prev, departureTime: e.target.value }
+                              : prev
+                          )
+                        }
+                        className="mt-1.5"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
+            </Card>
           </div>
 
-          {/* Adresse École */}
-          <div className="relative">
-            <Label>Adresse École</Label>
-            <Input
-              value={child.school?.adresse || ""}
-              onChange={handleSchoolAddressChange}
-              autoComplete="off"
-            />
-            {schoolSuggestions.length > 0 && (
-              <ul className="absolute z-20 w-full bg-white border rounded-lg shadow-md mt-1 max-h-48 overflow-y-auto">
-                {schoolSuggestions.map((s, i) => (
-                  <li
-                    key={i}
-                    className="p-2 cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSelectSchoolSuggestion(s)}
-                  >
-                    {s.formatted}
-                  </li>
-                ))}
-              </ul>
-            )}
+          {/* Actions en bas */}
+          <div className="flex gap-3 mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              className="flex-1"
+              disabled={saving}
+            >
+              Annuler
+            </Button>
+            <Button type="submit" disabled={saving} className="flex-1">
+              {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+            </Button>
           </div>
-          {/* Heure d'arrivée à l'école */}
-          <div>
-            <Label>Heure darrivée à lécole</Label>
-            <Input
-              type="time"
-              value={child.arrivalTime || ""}
-              onChange={(e) =>
-                setChild((prev) =>
-                  prev ? { ...prev, arrivalTime: e.target.value } : prev
-                )
-              }
-            />
-          </div>
-
-          {/* Heure de départ de l'école */}
-          <div>
-            <Label>Heure de départ de lécole</Label>
-            <Input
-              type="time"
-              value={child.departureTime || ""}
-              onChange={(e) =>
-                setChild((prev) =>
-                  prev ? { ...prev, departureTime: e.target.value } : prev
-                )
-              }
-            />
-          </div>
-
-          {/* Coordonnées école */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Latitude École</Label>
-              <Input type="number" value={child.school?.schoolLat} disabled />
-            </div>
-            <div>
-              <Label>Longitude École</Label>
-              <Input type="number" value={child.school?.schoolLong} disabled />
-            </div>
-          </div>
-
-          <Button type="submit" disabled={saving}>
-            {saving ? "Enregistrement..." : "💾 Enregistrer"}
-          </Button>
         </form>
-      </Card>
+      </div>
+
       <ToastContainer
         position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
+        autoClose={3000}
+        hideProgressBar
         closeOnClick
         pauseOnHover
-        toastStyle={{
-          width: "500px",
-        }}
-      />{" "}
+      />
     </div>
   );
 }

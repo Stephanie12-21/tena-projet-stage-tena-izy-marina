@@ -1,16 +1,21 @@
+import type React from "react";
 import { ProtectedRoute } from "@/app/context/protectedtoute";
 import { AuthProvider } from "@/app/context/provider";
+import { DashboardParentSidebar } from "@/components/features/espace-features/parent-sidebar-dashboard";
 
-export default function Layout({
+export default function DriverLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <div>
-      <AuthProvider>
-        <ProtectedRoute>{children}</ProtectedRoute>
-      </AuthProvider>
-    </div>
+    <AuthProvider>
+      <ProtectedRoute>
+        <div className="flex h-screen bg-background">
+          <DashboardParentSidebar />
+          <div className="flex-1 overflow-auto">{children}</div>
+        </div>
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
