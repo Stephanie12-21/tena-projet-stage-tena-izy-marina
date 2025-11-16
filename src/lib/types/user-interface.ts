@@ -34,7 +34,7 @@ export type ChildWithRelations = Children & {
   school: School;
   imageprofile: Image;
   parent: Users;
-  bus?: Bus;
+  bus?: Bus | null;
   scanLogs?: ScanLog[];
 };
 
@@ -87,7 +87,7 @@ export interface User {
   email: string;
   phone: string;
   role: string;
-  createdAt: string;
+  createdAt: Date;
 }
 
 export interface DriverProfile {
@@ -105,8 +105,8 @@ export interface DriverProfile {
     licenseType: string;
     licenseExpiration: string;
   } | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Driver {
@@ -116,8 +116,8 @@ export interface Driver {
   email: string;
   phone: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
   driverProfile?: DriverProfile | null;
 }
 
