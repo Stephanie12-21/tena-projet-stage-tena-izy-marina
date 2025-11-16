@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Light theme with blue/orange palette */
+  /* Light theme with orange palette */
   --background: #f8fafc;
   --foreground: #0f172a;
   --card: #ffffff;
@@ -13,35 +13,36 @@
   --popover-foreground: #0f172a;
   --primary: #f97316;
   --primary-foreground: #ffffff;
-  --secondary: #3b82f6;
+  --secondary: #fb923c;
   --secondary-foreground: #ffffff;
+  --accent: #ea580c;
+  --accent-foreground: #ffffff;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
-  --accent: #0ea5e9;
-  --accent-foreground: #ffffff;
+
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
   --input: #e2e8f0;
   --ring: #f97316;
   --chart-1: #f97316;
-  --chart-2: #3b82f6;
-  --chart-3: #0ea5e9;
-  --chart-4: #fb923c;
-  --chart-5: #60a5fa;
+  --chart-2: #fb923c;
+  --chart-3: #fdba74;
+  --chart-4: #ea580c;
+  --chart-5: #c2410c;
   --radius: 0.75rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #f97316;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #3b82f6;
+  --sidebar-accent: #fb923c;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #e2e8f0;
   --sidebar-ring: #f97316;
 }
 
 .dark {
-  /* Dark theme with blue/orange palette matching sidebar */
+  /* Dark theme with orange palette */
   --background: #020617;
   --foreground: #f1f5f9;
   --card: #0f172a;
@@ -50,11 +51,11 @@
   --popover-foreground: #f1f5f9;
   --primary: #f97316;
   --primary-foreground: #ffffff;
-  --secondary: #1e3a8a;
-  --secondary-foreground: #f1f5f9;
+  --secondary: #fb923c;
+  --secondary-foreground: #ffffff;
   --muted: #1e293b;
   --muted-foreground: #94a3b8;
-  --accent: #fb923c;
+  --accent: #fdba74;
   --accent-foreground: #0f172a;
   --destructive: #ef4444;
   --destructive-foreground: #f1f5f9;
@@ -62,10 +63,10 @@
   --input: rgba(148, 163, 184, 0.15);
   --ring: #fb923c;
   --chart-1: #f97316;
-  --chart-2: #3b82f6;
-  --chart-3: #0ea5e9;
-  --chart-4: #fb923c;
-  --chart-5: #60a5fa;
+  --chart-2: #fb923c;
+  --chart-3: #fdba74;
+  --chart-4: #ea580c;
+  --chart-5: #c2410c;
   --sidebar: #020617;
   --sidebar-foreground: #f1f5f9;
   --sidebar-primary: #f97316;
@@ -93,15 +94,17 @@
   --color-slate-900: #0f172a;
   --color-slate-950: #020617;
 
-  /* Orange colors */
+  /* Orange palette */
+  --color-orange-50: #fff7ed;
+  --color-orange-100: #ffedd5;
+  --color-orange-200: #fed7aa;
+  --color-orange-300: #fdba74;
   --color-orange-400: #fb923c;
   --color-orange-500: #f97316;
   --color-orange-600: #ea580c;
-
-  /* Blue colors */
-  --color-blue-400: #60a5fa;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
+  --color-orange-700: #c2410c;
+  --color-orange-800: #9a3412;
+  --color-orange-900: #7c2d12;
 
   /* Theme colors */
   --color-background: var(--background);

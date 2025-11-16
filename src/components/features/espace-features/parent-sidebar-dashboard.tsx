@@ -34,7 +34,7 @@ export function DashboardParentSidebar() {
     () => [
       { label: "Dashboard", path: "/", icon: HomeIcon },
       { label: "Enfants", path: "/children", icon: Users },
-      { label: "Abonnements", path: "/abonnements", icon: CreditCardIcon },
+      { label: "Abonnements", path: "/abonnement", icon: CreditCardIcon },
       { label: "Profil utilisateur", path: "/profil", icon: User },
     ],
     []
