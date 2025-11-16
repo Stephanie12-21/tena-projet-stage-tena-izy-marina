@@ -19,15 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Plus,
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  User,
-  X,
-} from "lucide-react";
+import { Plus, Search, ChevronLeft, ChevronRight, User, X } from "lucide-react";
 import { Driver } from "@/lib/types/user-interface";
 import InviteDriverForm from "@/components/features/espace-features/invite-driver-form";
 import { ToastContainer } from "react-toastify";
@@ -43,7 +35,6 @@ export default function DriversPage() {
   // États pour les filtres
   const [searchTerm, setSearchTerm] = useState("");
   const [licenseTypeFilter, setLicenseTypeFilter] = useState<string>("all");
-  const [showFilters, setShowFilters] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -95,13 +86,6 @@ export default function DriversPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentDrivers = filteredDrivers.slice(startIndex, endIndex);
-
-  // Types de permis uniques
-  const licenseTypes = Array.from(
-    new Set(
-      drivers.map((d) => d.driverProfile?.license?.licenseType).filter(Boolean)
-    )
-  );
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -193,21 +177,6 @@ export default function DriversPage() {
                 )}
               </div>
 
-              {/* Bouton toggle filtres */}
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="hover:bg-muted rounded-lg"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filtres
-                {licenseTypeFilter !== "all" && (
-                  <span className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
-                    1
-                  </span>
-                )}
-              </Button>
-
               {/* Items par page */}
               <Select
                 value={itemsPerPage.toString()}
@@ -227,46 +196,6 @@ export default function DriversPage() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Filtres avancés */}
-            {showFilters && (
-              <div className="mt-4 pt-4 border-t flex flex-wrap gap-3">
-                <div className="flex-1 min-w-[200px]">
-                  <label className="text-sm font-medium text-foreground mb-2 block">
-                    Type de permis
-                  </label>
-                  <Select
-                    value={licenseTypeFilter}
-                    onValueChange={setLicenseTypeFilter}
-                  >
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder="Tous les types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Tous les types</SelectItem>
-                      {licenseTypes.map((type) => (
-                        <SelectItem key={type} value={type as string}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {(searchTerm || licenseTypeFilter !== "all") && (
-                  <div className="flex items-end">
-                    <Button
-                      variant="ghost"
-                      onClick={clearFilters}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Réinitialiser
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
           </Card>
         </div>
 
@@ -457,7 +386,6 @@ export default function DriversPage() {
         </Card>
       </div>
 
-      {/* Toast */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
