@@ -856,9 +856,6 @@ export default function PricingCards() {
                   className="flex-1"
                 >
                   Mensuel
-                  <span className="ml-2 text-xs opacity-70">
-                    {formatPrice(unitPrices.MONTHLY)} MGA
-                  </span>
                 </Button>
                 <Button
                   size="sm"
@@ -867,9 +864,6 @@ export default function PricingCards() {
                   className="flex-1"
                 >
                   Annuel
-                  <span className="ml-2 text-xs opacity-70">
-                    {formatPrice(unitPrices.YEARLY)} MGA
-                  </span>
                 </Button>
               </div>
             </Card>
