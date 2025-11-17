@@ -96,7 +96,7 @@ export function DashboardSidebar() {
                   {dbUser.prenom} {dbUser.nom}
                 </p>
                 <p className="text-xs text-slate-400 truncate">
-                  Chauffeur de bus scolaire
+                  Administrateur
                 </p>
               </div>
             </div>

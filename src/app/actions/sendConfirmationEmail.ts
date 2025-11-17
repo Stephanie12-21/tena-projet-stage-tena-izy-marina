@@ -58,7 +58,13 @@ export async function sendConfirmationEmail(
               <div style="background:linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);border:2px solid #f97316;border-radius:12px;padding:20px;margin:0 0 24px 0;text-align:center;">
                 <p style="margin:0 0 4px 0;font-size:13px;color:#9a3412;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Votre Plan</p>
             <p style="margin:0;font-size:24px;color:#ea580c;font-weight:700;">
-  {subscription.plan === "MONTHLY" ? "MENSUEL" : subscription.plan === "ANNUAL" ? "ANNUEL" : subscription.plan}
+  ${
+    subscription.plan === "MONTHLY"
+      ? "MENSUEL"
+      : subscription.plan === "ANNUAL"
+      ? "ANNUEL"
+      : subscription.plan
+  }
 </p>
 
               </div>
