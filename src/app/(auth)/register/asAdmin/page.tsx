@@ -306,9 +306,7 @@ export default function SignInPage() {
         newestOnTop={false}
         closeOnClick
         pauseOnHover
-        toastStyle={{
-          width: "500px",
-        }}
+       
       />
       {/* --- Image à droite --- */}
       <div className="hidden md:flex w-1/2 relative overflow-hidden">

@@ -156,9 +156,7 @@ export default function ResetPasswordPage() {
             newestOnTop
             closeOnClick
             pauseOnHover
-            toastStyle={{
-              width: "420px",
-            }}
+            
           />
         </div>
       </div>

@@ -417,7 +417,6 @@ export default function Trajets() {
         newestOnTop
         closeOnClick
         pauseOnHover
-        toastStyle={{ width: "350px" }}
       />
     </>
   );

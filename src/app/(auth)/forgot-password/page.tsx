@@ -129,9 +129,7 @@ const ForgotPasswordPage = () => {
             newestOnTop
             closeOnClick
             pauseOnHover
-            toastStyle={{
-              width: "420px",
-            }}
+            
           />
         </div>
       </div>

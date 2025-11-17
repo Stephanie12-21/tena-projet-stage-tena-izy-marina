@@ -160,12 +160,12 @@ export default function SchoolForm({
       </div>
 
       {/* --- Coordonnées (lat/long) --- */}
-      {formData.schoolLat && formData.schoolLong && (
+      {/* {formData.schoolLat && formData.schoolLong && (
         <div className="text-sm text-gray-700">
           <p>Latitude : {formData.schoolLat}</p>
           <p>Longitude : {formData.schoolLong}</p>
         </div>
-      )}
+      )} */}
 
       {/* --- Boutons navigation --- */}
       <div className="flex justify-between pt-4">

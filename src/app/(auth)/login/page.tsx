@@ -280,9 +280,7 @@ const LoginPage = () => {
             newestOnTop={false}
             closeOnClick
             pauseOnHover
-            toastStyle={{
-              width: "500px",
-            }}
+           
           />
         </div>
       </div>

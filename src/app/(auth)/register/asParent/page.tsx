@@ -350,9 +350,7 @@ export default function SignInPage() {
         newestOnTop={false}
         closeOnClick
         pauseOnHover
-        toastStyle={{
-          width: "500px",
-        }}
+       
       />
 
       {/* --- Illustration --- */}

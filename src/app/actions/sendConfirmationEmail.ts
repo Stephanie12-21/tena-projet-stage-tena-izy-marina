@@ -45,9 +45,6 @@ export async function sendConfirmationEmail(
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg, #f97316 0%, #ea580c 100%);padding:40px;text-align:center;">
-              <div style="width:64px;height:64px;background-color:rgba(255,255,255,0.2);border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:32px;">
-                ✓
-              </div>
               <h1 style="margin:0;color:#ffffff;font-size:28px;font-weight:700;">Abonnement Confirmé !</h1>
               <p style="margin:8px 0 0 0;color:rgba(255,255,255,0.9);font-size:15px;">Merci pour votre confiance</p>
             </td>
@@ -60,9 +57,10 @@ export async function sendConfirmationEmail(
               <!-- Plan Badge -->
               <div style="background:linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);border:2px solid #f97316;border-radius:12px;padding:20px;margin:0 0 24px 0;text-align:center;">
                 <p style="margin:0 0 4px 0;font-size:13px;color:#9a3412;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Votre Plan</p>
-                <p style="margin:0;font-size:24px;color:#ea580c;font-weight:700;">${
-                  subscription.plan
-                }</p>
+            <p style="margin:0;font-size:24px;color:#ea580c;font-weight:700;">
+  {subscription.plan === "MONTHLY" ? "MENSUEL" : subscription.plan === "ANNUAL" ? "ANNUEL" : subscription.plan}
+</p>
+
               </div>
               
               <!-- Details -->
@@ -123,16 +121,7 @@ export async function sendConfirmationEmail(
                 </ul>
               </div>
               
-              <!-- CTA Button (optional) -->
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding:8px 0 0 0;">
-                    <a href="#" style="display:inline-block;background:linear-gradient(135deg, #f97316 0%, #ea580c 100%);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;box-shadow:0 4px 12px rgba(249,115,22,0.3);">
-                      Accéder à mon compte
-                    </a>
-                  </td>
-                </tr>
-              </table>
+              
               
             </td>
           </tr>

@@ -214,12 +214,12 @@ export default function ChildrenForm({
       </div>
 
       {/* Coordonnées géo */}
-      {formData.homeLat && formData.homeLong && (
+      {/* {formData.homeLat && formData.homeLong && (
         <div className="text-sm text-gray-700">
           <p>Latitude : {formData.homeLat}</p>
           <p>Longitude : {formData.homeLong}</p>
         </div>
-      )}
+      )} */}
 
       {/* 🕓 Horaires */}
       <div className="flex flex-col md:flex-row gap-4">
