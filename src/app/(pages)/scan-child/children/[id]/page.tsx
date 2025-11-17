@@ -51,16 +51,10 @@ export default function ChildPage() {
     if (!scanType || !child || !dbUser) return;
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      () => {
         startTransition(async () => {
           try {
-            await logChildScan(
-              child.id,
-              dbUser.id,
-              scanType,
-              position.coords.latitude,
-              position.coords.longitude
-            );
+            await logChildScan(child.id, dbUser.id, scanType);
             toast.success("Scan enregistré avec succès");
             setScanType(null);
           } catch (err: unknown) {
