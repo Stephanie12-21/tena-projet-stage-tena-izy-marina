@@ -87,7 +87,46 @@ export default function SignInPage() {
   };
 
   const handleGoBack = () => router.back();
-  const handleNext = () => setStep((prev) => prev + 1);
+  // const handleNext = () => setStep((prev) => prev + 1);
+
+  const handleNext = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.prenom?.trim()) {
+      newErrors.prenom = "Le prénom est obligatoire";
+    }
+
+    if (!formData.nom?.trim()) {
+      newErrors.nom = "Le nom est obligatoire";
+    }
+
+    if (!formData.email?.trim()) {
+      newErrors.email = "L’email est obligatoire";
+    }
+
+    if (!formData.phone?.trim()) {
+      newErrors.phone = "Le téléphone est obligatoire";
+    } else {
+      // ✅ Validation du numéro via Zod
+      const phoneCheck = z
+        .string()
+        .regex(/^\+?[0-9\s]{7,15}$/, "Numéro de téléphone invalide")
+        .safeParse(formData.phone);
+
+      if (!phoneCheck.success) {
+        newErrors.phone = "Numéro de téléphone invalide";
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setErrors({});
+    setStep((prev) => prev + 1);
+  };
+
   const handleBack = () => setStep((prev) => prev - 1);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -350,7 +389,6 @@ export default function SignInPage() {
         newestOnTop={false}
         closeOnClick
         pauseOnHover
-       
       />
 
       {/* --- Illustration --- */}

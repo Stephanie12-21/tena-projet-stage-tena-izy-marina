@@ -264,7 +264,7 @@ const LoginPage = () => {
               <p className="text-sm text-center text-gray-600">
                 Vous n&apos;avez pas encore de compte ?{" "}
                 <Link
-                  href="/register/asParent"
+                  href="/register/as-parent"
                   className="hover:underline font-medium transition-colors"
                 >
                   Créer un compte
@@ -280,7 +280,6 @@ const LoginPage = () => {
             newestOnTop={false}
             closeOnClick
             pauseOnHover
-           
           />
         </div>
       </div>

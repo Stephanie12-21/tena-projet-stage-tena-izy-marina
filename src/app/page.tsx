@@ -163,7 +163,7 @@ export default function HomePage() {
                       size="sm"
                       className={cn(isScrolled && "lg:hidden")}
                     >
-                      <Link href="/register/asParent">S&apos;inscrire</Link>
+                      <Link href="/register/as-parent">S&apos;inscrire</Link>
                     </Button>
                   </div>
                 )}
@@ -193,7 +193,7 @@ export default function HomePage() {
                 asChild
                 className="bg-orange-500 hover:bg-orange-600"
               >
-                <Link href="/signup">
+                <Link href="/register/as-parent">
                   Commencer maintenant
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
@@ -379,7 +379,7 @@ export default function HomePage() {
                   size="lg"
                   className="w-full bg-orange-500 hover:bg-orange-600"
                 >
-                  <Link href="/signup">Commencer maintenant</Link>
+                  <Link href="/register/as-parent">Commencer maintenant</Link>
                 </Button>
               </Card>
 
@@ -422,7 +422,7 @@ export default function HomePage() {
                   size="lg"
                   className="w-full bg-orange-500 hover:bg-orange-600"
                 >
-                  <Link href="/signup">Commencer maintenant</Link>
+                  <Link href="/register/as-parent">Commencer maintenant</Link>
                 </Button>
               </Card>
             </div>
@@ -439,7 +439,9 @@ export default function HomePage() {
               Rejoignez les parents qui font confiance à notre solution
             </p>
             <Button size="lg" className="bg-orange-500 hover:bg-orange-600">
-              <Link href="/signup/AsParent">Créer mon compte gratuitement</Link>
+              <Link href="/register/as-parent">
+                Créer mon compte gratuitement
+              </Link>
             </Button>
           </div>
         </section>
