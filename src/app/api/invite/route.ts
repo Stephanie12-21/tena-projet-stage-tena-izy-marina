@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
     // Créer le token JWT pour l'invitation
     const token = jwt.sign({ email, adminId }, JWT_SECRET, { expiresIn: "1h" });
-    const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL}/register/asDriver?token=${token}`;
+    const inviteLink = `${process.env.NEXT_PUBLIC_SITE_URL}/register/as-driver?token=${token}`;
 
     // Configurer le transporteur mail
     const transporter = nodemailer.createTransport({
