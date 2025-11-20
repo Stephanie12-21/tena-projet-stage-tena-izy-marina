@@ -1,11 +1,11 @@
 {
-  "name": "Mon Application Next.js",
-  "short_name": "MonApp",
-  "description": "Une super PWA faite avec Next.js et next-pwa !",
+  "name": "SmartRide",
+  "short_name": "SmartRide",
+  "description": "Une plateforme de gestion de transport scolaire!",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#317EFB",
+  "background_color": "#000000",
+  "theme_color": "#121212",
   "icons": [
     {
       "src": "/logo.png",
