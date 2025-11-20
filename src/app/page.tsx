@@ -198,9 +198,6 @@ export default function HomePage() {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/login">Se connecter</Link>
-              </Button>
             </div>
           </div>
         </section>

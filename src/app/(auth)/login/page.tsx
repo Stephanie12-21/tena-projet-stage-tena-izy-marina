@@ -143,9 +143,9 @@ const LoginPage = () => {
   return (
     <div className="flex min-h-screen relative overflow-hidden">
       {/* --- FORMULAIRE --- */}
-      <div className="flex w-full md:w-1/2 flex-col p-4 relative z-10">
+      <div className="flex w-full md:w-1/2 flex-col p-4 relative z-10 justify-center items-center">
         {/* --- Haut : Bouton retour + Logo --- */}
-        <div className="flex justify-between items-center mb-20">
+        <div className="flex justify-between items-center mb-20 w-full">
           <Button
             variant="outline"
             className="group hover:scale-105 transition-all duration-300"
@@ -159,7 +159,7 @@ const LoginPage = () => {
         </div>
 
         {/* --- Milieu : Formulaire --- */}
-        <div className="flex flex-col items-center space-y-8">
+        <div className="flex flex-col items-center space-y-8 w-full">
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold">Bienvenue</h1>
             <p className="text-base font-medium">
