@@ -142,21 +142,21 @@ const LoginPage = () => {
 
   return (
     <div className="flex min-h-screen relative overflow-hidden">
+      <div className="flex justify-between items-center mb-20 w-full">
+        <Button
+          variant="outline"
+          className="group hover:scale-105 transition-all duration-300"
+          onClick={handleGoBack}
+          type="button"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+          Retour
+        </Button>
+        <Image src="/logo.png" alt="Smart Ride" width={50} height={50} />
+      </div>
       {/* --- FORMULAIRE --- */}
       <div className="flex w-full md:w-1/2 flex-col p-4 relative z-10 justify-center items-center">
         {/* --- Haut : Bouton retour + Logo --- */}
-        <div className="flex justify-between items-center mb-20 w-full">
-          <Button
-            variant="outline"
-            className="group hover:scale-105 transition-all duration-300"
-            onClick={handleGoBack}
-            type="button"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-            Retour
-          </Button>
-          <Image src="/logo.png" alt="Smart Ride" width={50} height={50} />
-        </div>
 
         {/* --- Milieu : Formulaire --- */}
         <div className="flex flex-col items-center space-y-8 w-full">

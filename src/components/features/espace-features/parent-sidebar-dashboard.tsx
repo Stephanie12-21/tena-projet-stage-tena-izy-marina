@@ -162,7 +162,7 @@ export function DashboardParentSidebar() {
                       {dbUser.prenom} {dbUser.nom}
                     </p>
                     <p className="text-xs text-slate-500 truncate">
-                      Chauffeur de bus scolaire
+                      Parent d&apos;enfants
                     </p>
                   </div>
                 </div>
