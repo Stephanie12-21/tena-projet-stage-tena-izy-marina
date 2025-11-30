@@ -57,15 +57,22 @@ export async function POST(req: Request) {
           ? "YEARLY"
           : "MONTHLY";
 
+      // Récupérer parent
       const parent = await prisma.users.findUnique({ where: { id: parentId } });
       if (!parent) throw new Error("Parent introuvable.");
+
+      // Enregistrer stripeCustomerId si pas encore défini
+      if (!parent.stripeCustomerId && session.customer) {
+        await prisma.users.update({
+          where: { id: parentId },
+          data: { stripeCustomerId: session.customer.toString() },
+        });
+      }
 
       const childrenIds = childrenList.split(",");
       const children = await prisma.children.findMany({
         where: { id: { in: childrenIds } },
       });
-
-      const childrenNames = children.map((c) => `${c.nom} ${c.prenom}`);
 
       const createdAt = new Date();
       const expiresAt = new Date(createdAt);
@@ -75,38 +82,48 @@ export async function POST(req: Request) {
       const stripeSubscription = await stripe.subscriptions.retrieve(
         stripeSubId
       );
-      // Créer abonnement
-      const subscription = await prisma.subscription.create({
-        data: {
-          stripeSubId,
-          parentId,
-          plan,
-          status: stripeSubscription.status,
-        },
-      });
 
-      // Lier enfants
-      await prisma.children.updateMany({
-        where: { id: { in: childrenIds } },
-        data: { subscriptionId: subscription.id },
-      });
+      // Créer les abonnements pour chaque enfant
+      for (const child of children) {
+        const subscription = await prisma.subscription.create({
+          data: {
+            stripeSubId,
+            parentId,
+            plan,
+            status: stripeSubscription.status,
+            childId: child.id,
+          },
+        });
 
-      // Envoyer email
-      try {
-        await sendConfirmationEmail(
-          parent.email,
-          { id: subscription.id, plan, createdAt, expiresAt, price: pricePaid },
-          childrenNames
-        );
-      } catch (emailErr) {
-        console.error("❌ Erreur envoi email confirmation :", emailErr);
+        // Lier l'enfant à son abonnement
+        await prisma.children.update({
+          where: { id: child.id },
+          data: { subscription: { connect: { id: subscription.id } } },
+        });
+
+        // Envoyer email de confirmation
+        try {
+          await sendConfirmationEmail(
+            parent.email,
+            {
+              id: subscription.id,
+              plan,
+              createdAt,
+              expiresAt,
+              price: pricePaid,
+            },
+            [`${child.nom} ${child.prenom}`]
+          );
+        } catch (emailErr) {
+          console.error("❌ Erreur envoi email confirmation :", emailErr);
+        }
+
+        // Marquer email envoyé
+        await prisma.subscription.update({
+          where: { id: subscription.id },
+          data: { emailSent: true },
+        });
       }
-
-      // Marquer email envoyé
-      await prisma.subscription.update({
-        where: { id: subscription.id },
-        data: { emailSent: true },
-      });
 
       return NextResponse.json({ received: true }, { status: 200 });
     } catch (error) {
@@ -127,21 +144,20 @@ export async function POST(req: Request) {
         where: { stripeSubId: subscription.id },
         data: {
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          status: subscription.status, // ⚡ status réel de Stripe
+          status: subscription.status,
         },
         include: {
           parent: true,
-          children: true,
+          child: true,
         },
       });
 
       // Envoi email si annulation programmée
       if (subscription.cancel_at_period_end && !updatedSub.emailSent) {
         try {
-          await sendCancellationEmail(
-            updatedSub.parent.email,
-            updatedSub.children.map((c) => `${c.prenom} ${c.nom}`)
-          );
+          await sendCancellationEmail(updatedSub.parent.email, [
+            `${updatedSub.child.prenom} ${updatedSub.child.nom}`,
+          ]);
 
           await prisma.subscription.update({
             where: { id: updatedSub.id },

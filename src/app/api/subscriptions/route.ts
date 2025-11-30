@@ -6,7 +6,12 @@ export async function GET() {
     const subscriptions = await prisma.subscription.findMany({
       include: {
         parent: true,
-        children: true,
+        child: {
+          include: {
+            school: true,
+            imageprofile: true,
+          },
+        },
       },
     });
     return NextResponse.json(subscriptions);

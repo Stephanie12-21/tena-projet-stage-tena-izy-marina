@@ -141,8 +141,9 @@ const LoginPage = () => {
   const handleGoBack = () => router.back();
 
   return (
-    <div className="flex min-h-screen relative overflow-hidden">
-      <div className="flex justify-between items-center mb-20 w-full">
+    <div className="flex min-h-screen relative overflow-hidden flex-col">
+      {/* --- Haut : Bouton retour + Logo --- */}
+      <div className="flex justify-between items-center p-4 w-full">
         <Button
           variant="outline"
           className="group hover:scale-105 transition-all duration-300"
@@ -156,8 +157,6 @@ const LoginPage = () => {
       </div>
       {/* --- FORMULAIRE --- */}
       <div className="flex w-full md:w-1/2 flex-col p-4 relative z-10 justify-center items-center">
-        {/* --- Haut : Bouton retour + Logo --- */}
-
         {/* --- Milieu : Formulaire --- */}
         <div className="flex flex-col items-center space-y-8 w-full">
           <div className="text-center space-y-4">
@@ -285,7 +284,7 @@ const LoginPage = () => {
       </div>
 
       {/* --- Image à droite --- */}
-      <div className="hidden md:flex w-1/2 relative overflow-hidden">
+      <div className="hidden md:flex w-1/2 absolute right-0 top-0 h-full overflow-hidden">
         <Image
           src="/illustration.jpg"
           alt="Illustration Login"

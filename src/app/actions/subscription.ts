@@ -21,33 +21,21 @@ export async function createCheckoutSession({
     throw new Error("Aucun enfant sélectionné");
   }
 
-  // ✅ Récupérer le parent depuis la DB
-  const parent = await prisma.users.findUnique({
-    where: { id: parentId },
-  });
+  // Récupérer le parent
+  const parent = await prisma.users.findUnique({ where: { id: parentId } });
+  if (!parent) throw new Error("Parent introuvable");
 
-  if (!parent) {
-    throw new Error("Parent introuvable");
-  }
-
-  // ✅ Générer le slug à partir du prénom et nom du parent
+  // Créer un slug pour les URLs
   const slug = `${parent.prenom}-${parent.nom}`
     .toLowerCase()
     .replace(/\s+/g, "-")
-    .normalize("NFD") // pour retirer les accents
-    .replace(/[\u0300-\u036f]/g, ""); // supprimer les diacritiques
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
-  console.log("🔗 Slug parent :", slug);
-
-  // ✅ Créer la session Stripe
+  // Créer la session Stripe
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    line_items: [
-      {
-        price: priceId,
-        quantity: childrenIds.length,
-      },
-    ],
+    line_items: [{ price: priceId, quantity: childrenIds.length }],
     metadata: {
       parentId,
       childrenIds: childrenIds.join(","),
@@ -57,47 +45,33 @@ export async function createCheckoutSession({
     customer_email: email,
   });
 
-  if (!session.url) {
-    throw new Error("Erreur Stripe : session sans URL");
-  }
-
+  if (!session.url) throw new Error("Erreur Stripe : session sans URL");
   return session.url;
 }
 
 export async function cancelSubscription(subscriptionId: string) {
-  try {
-    const subscription = await prisma.subscription.findUnique({
-      where: { id: subscriptionId },
-    });
+  const subscription = await prisma.subscription.findUnique({
+    where: { id: subscriptionId },
+  });
+  if (!subscription) throw new Error("Abonnement introuvable");
+  if (!subscription.stripeSubId) throw new Error("Aucun ID Stripe associé");
 
-    if (!subscription) {
-      throw new Error("Abonnement introuvable en base");
-    }
+  // Annuler sur Stripe
+  const updatedStripeSub = await stripe.subscriptions.update(
+    subscription.stripeSubId,
+    { cancel_at_period_end: true }
+  );
 
-    if (!subscription.stripeSubId) {
-      throw new Error("Aucun ID Stripe associé à cet abonnement");
-    }
+  // Mettre à jour en base
+  await prisma.subscription.update({
+    where: { id: subscription.id },
+    data: {
+      cancelAtPeriodEnd: updatedStripeSub.cancel_at_period_end,
+      status: updatedStripeSub.status,
+    },
+  });
 
-    const updatedStripeSub = await stripe.subscriptions.update(
-      subscription.stripeSubId,
-      {
-        cancel_at_period_end: true,
-      }
-    );
-
-    await prisma.subscription.update({
-      where: { id: subscription.id },
-      data: {
-        cancelAtPeriodEnd: updatedStripeSub.cancel_at_period_end,
-        status: updatedStripeSub.status,
-      },
-    });
-
-    return { success: true };
-  } catch (error) {
-    console.error("Erreur annulation abonnement:", error);
-    throw new Error("Impossible d'annuler l'abonnement.");
-  }
+  return { success: true };
 }
 
 export type FormState = {
@@ -107,35 +81,28 @@ export type FormState = {
 };
 
 export async function resumeSubscription(childId: string): Promise<FormState> {
-  if (!childId) {
-    return { error: "childId est requis" };
-  }
+  if (!childId) return { error: "childId est requis" };
 
   try {
-    // ✅ Chercher l'abonnement qui contient cet enfant
-    const subscription = await prisma.subscription.findFirst({
-      where: {
-        children: {
-          some: { id: childId },
-        },
-      },
+    // Rechercher l'abonnement associé à cet enfant
+    const subscription = await prisma.subscription.findUnique({
+      where: { childId }, // 🔑 Utiliser childId et non children
     });
 
-    if (!subscription) {
+    if (!subscription)
       return { error: "Aucun abonnement trouvé pour cet enfant" };
-    }
-
-    if (!subscription.stripeSubId) {
+    if (!subscription.stripeSubId)
       return { error: "Aucun abonnement Stripe associé" };
-    }
 
-    // ✅ Reprendre sur Stripe
+    // Reprendre sur Stripe
     const stripeSub = await stripe.subscriptions.update(
       subscription.stripeSubId,
-      { cancel_at_period_end: false }
+      {
+        cancel_at_period_end: false,
+      }
     );
 
-    // ✅ Mettre à jour dans ta base de données
+    // Mettre à jour la base
     await prisma.subscription.update({
       where: { id: subscription.id },
       data: {
@@ -144,17 +111,13 @@ export async function resumeSubscription(childId: string): Promise<FormState> {
       },
     });
 
+    // Revalider les pages
     revalidatePath("/dashboard");
     revalidatePath("/");
 
-    return {
-      success: true,
-      message: "✅ Abonnement repris avec succès",
-    };
+    return { success: true, message: "✅ Abonnement repris avec succès" };
   } catch (error) {
     console.error("Erreur reprise abonnement:", error);
-    return {
-      error: "Erreur serveur lors de la reprise de l'abonnement",
-    };
+    return { error: "Erreur serveur lors de la reprise de l'abonnement" };
   }
 }

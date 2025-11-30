@@ -5,8 +5,8 @@ export async function POST(req: Request) {
   let driverId, lat, lon;
 
   try {
-    const body = await req.text(); // D'abord récupérer le texte brut
-    console.log("📦 Body reçu:", body);
+    const body = await req.text();
+    console.log("Body reçu:", body);
 
     if (!body) {
       return NextResponse.json(
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     lat = parsedBody.lat;
     lon = parsedBody.lon;
   } catch (parseError) {
-    console.error("❌ Erreur parsing JSON:", parseError);
+    console.error(" Erreur parsing JSON:", parseError);
     return NextResponse.json(
       { success: false, error: "Format JSON invalide" },
       { status: 400 }
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    console.log("📍 Données parsées :", { driverId, lat, lon });
+    // console.log(" Données parsées :", { driverId, lat, lon });
 
     if (!driverId || lat == null || lon == null) {
       return NextResponse.json(
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      console.error("❌ Erreur RPC :", error);
+      console.error(" Erreur RPC :", error);
       return NextResponse.json(
         { success: false, error: error.message },
         { status: 400 }
@@ -56,17 +56,17 @@ export async function POST(req: Request) {
 
     // Vérifiez la réponse de la fonction
     if (data && !data.success) {
-      console.error("❌ Erreur fonction :", data.error);
+      console.error("Erreur fonction :", data.error);
       return NextResponse.json(
         { success: false, error: data.error },
         { status: 400 }
       );
     }
 
-    console.log("✅ Mise à jour réussie pour :", driverId);
+    //console.log("✅ Mise à jour réussie pour :", driverId);
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("🔥 Erreur API :", err);
+    console.error(" Erreur API :", err);
     return NextResponse.json(
       {
         success: false,

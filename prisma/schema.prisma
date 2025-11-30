@@ -24,16 +24,18 @@ model Users {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Stripe Customer ID (un parent = un client Stripe)
+  stripeCustomerId String? @unique
+
   // Relations
-  children      Children[] // Pour les parents
-  subscriptions Subscription[] // Pour les parents
-  driverProfile DriverProfile? // Pour les chauffeurs
-  buses         Bus[] // Buses assignées si DRIVER
+  children      Children[]
+  subscriptions Subscription[]
+  driverProfile DriverProfile?
+  buses         Bus[]
   scanLogs      ScanLog[]
   anomalies     Anomaly[]
 }
 
-// Enum des rôles
 enum Role {
   PARENT
   ADMIN
@@ -46,15 +48,12 @@ model DriverProfile {
   user   Users  @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String @unique
 
-  // Position actuelle du chauffeur
   currentLat  Float?
   currentLong Float?
 
-  // Photo de profil
   image   Image?  @relation(fields: [imageId], references: [id])
   imageId String? @unique
 
-  // Relation vers le permis
   license   DriverLicense? @relation(fields: [licenseId], references: [id])
   licenseId String?        @unique
 
@@ -69,7 +68,6 @@ model DriverLicense {
   licenseType       LicenseType
   licenseExpiration DateTime
 
-  // Photos du permis
   photoFront String?
   photoBack  String?
 
@@ -95,27 +93,21 @@ model Children {
   homeLat  Float
   homeLong Float
 
-  //heures
   arrivalTime   String
   departureTime String
 
-  // École
   school   School @relation(fields: [schoolId], references: [id], onDelete: Restrict)
   schoolId String
 
-  // Image de profil
   imageprofile   Image  @relation(fields: [imageprofileId], references: [id])
   imageprofileId String @unique
 
-  // Parent
   parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade)
   parentId String
 
-  // Abonnement (facultatif)
-  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
-  subscriptionId String?
+  // Abonnement (0 ou 1) — relation inverse (Subscription possède la FK childId)
+  subscription Subscription?
 
-  // Bus assigné
   bus   Bus?    @relation(fields: [busId], references: [id])
   busId String?
 
@@ -133,14 +125,15 @@ model School {
   schoolLat  Float
   schoolLong Float
 
-  // Relation inverse
   children Children[]
 }
 
 // ------------------- IMAGE -------------------
 model Image {
-  id     String         @id @default(uuid())
-  url    String
+  id  String @id @default(uuid())
+  url String
+
+  // relations inverses (pas de fields/references ici)
   child  Children?      @relation
   driver DriverProfile? @relation
 }
@@ -156,12 +149,13 @@ model Subscription {
   cancelAtPeriodEnd Boolean  @default(false)
   createdAt         DateTime @default(now())
 
-  // Lien vers le parent
+  // Lien vers le parent (le parent qui paie)
   parent   Users  @relation(fields: [parentId], references: [id], onDelete: Cascade)
   parentId String
 
-  // Enfants concernés
-  children Children[]
+  // Un abonnement concerne un seul enfant ; childId est unique pour éviter plusieurs abonnements pour le même enfant
+  child   Children @relation(fields: [childId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  childId String   @unique
 }
 
 enum Plan {
@@ -177,11 +171,9 @@ model Bus {
   seats     Int
   status    BusStatus @default(ACTIF)
 
-  // Chauffeur du bus
   driver   Users  @relation(fields: [driverId], references: [id])
   driverId String
 
-  // Enfants assignés à ce bus
   children Children[]
 
   createdAt DateTime  @default(now())
@@ -195,7 +187,7 @@ enum BusStatus {
   MAINTENANCE
 }
 
-// ------------------- SCANS POUR LES LOGS DE PRESENCE -------------------
+// ------------------- SCAN LOGS -------------------
 model ScanLog {
   id      String   @id @default(uuid())
   child   Children @relation(fields: [childId], references: [id])
@@ -225,15 +217,12 @@ model Anomaly {
   id          String @id @default(uuid())
   description String
 
-  // Enfant concerné
   child   Children @relation(fields: [childId], references: [id])
   childId String
 
-  // Bus concerné
   bus   Bus    @relation(fields: [busId], references: [id])
   busId String
 
-  // Chauffeur concerné
   driver   Users  @relation(fields: [driverId], references: [id])
   driverId String
 

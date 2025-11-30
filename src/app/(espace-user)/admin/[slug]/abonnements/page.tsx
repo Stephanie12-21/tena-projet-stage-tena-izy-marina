@@ -2,28 +2,59 @@
 
 import React, { useEffect, useState } from "react";
 import { CreditCard, Calendar, AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Image from "next/image";
 
+// Types EXACTEMENT comme ton API les retourne
 type Subscription = {
   id: string;
-  plan: string;
+  plan: "MONTHLY" | "YEARLY" | string;
   status: string;
   cancelAtPeriodEnd: boolean;
   createdAt: string;
+
   parent: {
     nom: string;
     prenom: string;
     email: string;
+    phone: string;
   };
-  children: {
+
+  child: {
     nom: string;
     prenom: string;
-  }[];
+    adresse: string;
+    arrivalTime: string;
+    departureTime: string;
+    imageprofile?: {
+      url: string;
+    };
+    school?: {
+      nom: string;
+      adresse: string;
+    };
+  } | null;
 };
 
 const AbonnementPage = () => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Modal
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<Subscription | null>(null);
+
+  const openModal = (sub: Subscription) => {
+    setSelected(sub);
+    setOpen(true);
+  };
+
+  // Chargement API
   useEffect(() => {
     const fetchSubscriptions = async () => {
       try {
@@ -40,6 +71,7 @@ const AbonnementPage = () => {
     fetchSubscriptions();
   }, []);
 
+  // Style statut
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -66,11 +98,12 @@ const AbonnementPage = () => {
     }
   };
 
+  // Loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600 text-lg">Chargement des abonnements...</p>
         </div>
       </div>
@@ -78,60 +111,43 @@ const AbonnementPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* En-tête */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Gestion des abonnements
-          </h1>
-          <p className="text-gray-600">
-            Vue d&apos;ensemble de tous les abonnements actifs et inactifs
-          </p>
-        </div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+          Gestion des abonnements
+        </h1>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border overflow-hidden mt-6">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Abonnement
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Parent
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Enfants
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Plan
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Date création
-                  </th>
+                <tr className="bg-gray-50 border-b">
+                  <th className="px-6 py-4">Abonnement</th>
+                  <th className="px-6 py-4">Parent</th>
+                  <th className="px-6 py-4">Enfant</th>
+                  <th className="px-6 py-4">Plan</th>
+                  <th className="px-6 py-4">Statut</th>
+                  <th className="px-6 py-4">Date création</th>
+                  <th className="px-6 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+
+              <tbody className="divide-y">
                 {subscriptions.map((sub) => (
-                  <tr
-                    key={sub.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
+                  <tr key={sub.id} className="hover:bg-gray-50">
+                    {/* ID */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <div className="bg-blue-100 p-2 rounded-lg mr-3">
                           <CreditCard className="w-4 h-4 text-blue-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="font-medium">
                             {sub.id.substring(0, 8)}...
                           </p>
+
                           {sub.cancelAtPeriodEnd && (
-                            <span className="inline-flex items-center text-xs text-orange-600 mt-1">
+                            <span className="inline-flex items-center text-xs text-orange-600">
                               <AlertCircle className="w-3 h-3 mr-1" />
                               Annulation prévue
                             </span>
@@ -139,55 +155,66 @@ const AbonnementPage = () => {
                         </div>
                       </div>
                     </td>
+
+                    {/* Parent */}
                     <td className="px-6 py-4">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {sub.parent?.nom} {sub.parent?.prenom}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {sub.parent?.email}
-                        </p>
-                      </div>
+                      <p className="font-medium">
+                        {sub.parent.nom} {sub.parent.prenom}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {sub.parent.email}
+                      </p>
                     </td>
+
+                    {/* Enfant */}
                     <td className="px-6 py-4">
-                      {sub.children && sub.children.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {sub.children.map((child, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
-                            >
-                              {child.nom} {child.prenom}
-                            </span>
-                          ))}
-                        </div>
+                      {sub.child ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {sub.child.nom} {sub.child.prenom}
+                        </span>
                       ) : (
-                        <span className="text-sm text-gray-400">Aucun</span>
+                        <span className="text-gray-400 text-sm">Aucun</span>
                       )}
                     </td>
+
+                    {/* Plan */}
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                        {sub.plan}
+                      <span className="px-3 py-1 rounded-full text-sm bg-blue-50 border text-blue-700">
+                        {sub.plan === "YEARLY"
+                          ? "Annuel"
+                          : sub.plan === "MONTHLY"
+                          ? "Mensuel"
+                          : sub.plan}
                       </span>
                     </td>
+
+                    {/* Statut */}
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(
+                        className={`px-3 py-1 rounded-full border text-sm ${getStatusColor(
                           sub.status
                         )}`}
                       >
                         {getStatusLabel(sub.status)}
                       </span>
                     </td>
+
+                    {/* Date création */}
                     <td className="px-6 py-4">
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                        {new Date(sub.createdAt).toLocaleDateString("fr-FR", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {new Date(sub.createdAt).toLocaleDateString("fr-FR")}
                       </div>
+                    </td>
+
+                    {/* Bouton modal */}
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => openModal(sub)}
+                        className="px-3 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        Détails
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -203,6 +230,137 @@ const AbonnementPage = () => {
           )}
         </div>
       </div>
+
+      {/* ---- MODAL ---- */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Détails de l’abonnement</DialogTitle>
+          </DialogHeader>
+
+          {selected && (
+            <div className="space-y-6 text-sm">
+              {/* PARENT */}
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Parent</h3>
+                <p>
+                  {selected.parent.nom} {selected.parent.prenom}
+                </p>
+                <p className="text-gray-500">{selected.parent.email}</p>
+                <p className="text-gray-500">{selected.parent.phone}</p>
+              </div>
+
+              {/* ENFANT */}
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Enfant</h3>
+
+                {selected.child ? (
+                  <div className="p-4 border rounded-xl flex gap-5">
+                    {/* PHOTO */}
+                    {selected.child.imageprofile?.url ? (
+                      <Image
+                        width={100}
+                        height={100}
+                        src={selected.child.imageprofile.url}
+                        alt="Photo enfant"
+                        className="w-24 h-24 rounded-lg object-cover border"
+                      />
+                    ) : (
+                      <div className="w-24 h-24 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500">
+                        Aucune photo
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <p className="font-semibold text-base">
+                        {selected.child.nom} {selected.child.prenom}
+                      </p>
+
+                      <p>
+                        <span className="font-semibold">Adresse :</span>
+                        <br />
+                        {selected.child.adresse}
+                      </p>
+
+                      <p>
+                        <span className="font-semibold">
+                          Heure d&apos;arrivée :
+                        </span>{" "}
+                        {selected.child.arrivalTime}
+                      </p>
+
+                      <p>
+                        <span className="font-semibold">Heure de départ :</span>{" "}
+                        {selected.child.departureTime}
+                      </p>
+
+                      {selected.child.school && (
+                        <div>
+                          <p className="font-semibold">École :</p>
+                          <p>{selected.child.school.nom}</p>
+                          <p className="text-gray-500">
+                            {selected.child.school.adresse}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Aucun enfant associé</p>
+                )}
+              </div>
+
+              {/* ABONNEMENT */}
+              <div>
+                <h3 className="font-semibold text-lg mb-1">Abonnement</h3>
+
+                <p>
+                  Type :{" "}
+                  <b>
+                    {selected.plan === "YEARLY"
+                      ? "Annuel"
+                      : selected.plan === "MONTHLY"
+                      ? "Mensuel"
+                      : selected.plan}
+                  </b>
+                </p>
+
+                <p>
+                  Statut : <b>{getStatusLabel(selected.status)}</b>
+                </p>
+
+                {/* Dates */}
+                <p>
+                  Début :{" "}
+                  {new Date(selected.createdAt).toLocaleDateString("fr-FR")}
+                </p>
+
+                <p>
+                  Fin :{" "}
+                  {(() => {
+                    const start = new Date(selected.createdAt);
+                    const end = new Date(start);
+                    if (selected.plan === "MONTHLY")
+                      end.setMonth(end.getMonth() + 1);
+                    if (selected.plan === "YEARLY")
+                      end.setFullYear(end.getFullYear() + 1);
+                    return end.toLocaleDateString("fr-FR");
+                  })()}
+                </p>
+
+                <p>
+                  Renouvellement :
+                  {selected.cancelAtPeriodEnd ? (
+                    <span className="text-red-600"> Désactivé</span>
+                  ) : (
+                    <span className="text-green-600"> Activé</span>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

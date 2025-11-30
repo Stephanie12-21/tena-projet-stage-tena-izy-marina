@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plan } from "../../../../../../generated/prisma";
 import { useAuth } from "@/app/context/provider";
 import {
   cancelSubscription,
@@ -44,7 +43,9 @@ interface Child {
 }
 
 export default function PricingCards() {
-  const [billingPeriod, setBillingPeriod] = useState<Plan>("MONTHLY");
+  const [billingPeriod, setBillingPeriod] = useState<"MONTHLY" | "YEARLY">(
+    "MONTHLY"
+  );
   const { dbUser, loading: authLoading } = useAuth();
 
   const [children, setChildren] = useState<Child[]>([]);
@@ -89,12 +90,12 @@ export default function PricingCards() {
     );
   };
 
-  const priceIds = {
+  const priceIds: Record<"MONTHLY" | "YEARLY", string> = {
     MONTHLY: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
     YEARLY: process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
   };
 
-  const unitPrices = {
+  const unitPrices: Record<"MONTHLY" | "YEARLY", number> = {
     MONTHLY: 22500,
     YEARLY: 270000,
   };
@@ -300,7 +301,7 @@ export default function PricingCards() {
                         {child.subscription?.cancelAtPeriodEnd ? (
                           <span className="text-xs px-2 py-1 rounded-md bg-orange-500/10 text-orange-600">
                             <Clock className="w-3 h-3 inline mr-1" />
-                            Expire
+                            Expire à la fin de la période
                           </span>
                         ) : child.subscription?.status?.toLowerCase() ===
                           "active" ? (

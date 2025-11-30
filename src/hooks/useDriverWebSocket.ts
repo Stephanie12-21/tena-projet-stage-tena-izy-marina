@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/app/context/provider";
-import { createClient as createClientAnon } from "@/utils/supabase/client"; // clé anon pour Realtime
+import { createClient as createClientAnon } from "@/utils/supabase/client"; 
 import { useEffect, useState } from "react";
 
 interface Position {
@@ -57,7 +57,7 @@ export function useDriverSupabaseRealtime(driverId?: string) {
 
           const data = await res.json();
           if (!data.success) {
-            console.error("❌ Erreur API:", data.error);
+            console.error("Erreur API:", data.error);
             setError(`Erreur mise à jour: ${data.error}`);
           } else {
             setError(null); // Clear error on success
@@ -65,7 +65,7 @@ export function useDriverSupabaseRealtime(driverId?: string) {
         } catch (err) {
           const errorMsg =
             err instanceof Error ? err.message : "Erreur inconnue";
-          console.error("❌ Erreur fetch:", errorMsg);
+          console.error("Erreur fetch:", errorMsg);
           setError(`Erreur connexion: ${errorMsg}`);
         }
       },
