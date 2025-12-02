@@ -64,7 +64,7 @@ model DriverProfile {
 // ------------------- DRIVER LICENSE -------------------
 model DriverLicense {
   id                String      @id @default(uuid())
-  licenseNumber     String
+  licenseNumber     String      @unique
   licenseType       LicenseType
   licenseExpiration DateTime
 
