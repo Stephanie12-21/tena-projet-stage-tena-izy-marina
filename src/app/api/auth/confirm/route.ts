@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const icon = success ? "✅" : "⚠️";
   const description = success
     ? "Votre compte a été vérifié. Vous pouvez maintenant vous connecter et profiter de SmartRide."
     : "Quelque chose s'est mal passé. Ne vous inquiétez pas, vous pouvez retourner à la page d'accueil.";
@@ -44,7 +43,6 @@ export async function GET(request: NextRequest) {
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #fec03f 0%, #ff9a3c 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -76,21 +74,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    .icon {
-      font-size: 80px;
-      margin-bottom: 20px;
-      animation: bounce 2s infinite;
-      filter: drop-shadow(0 4px 8px rgba(254, 192, 63, 0.3));
-    }
-
-    @keyframes bounce {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
-    }
+ 
 
     h1 {
       color: #2d3748;
@@ -147,7 +131,6 @@ export async function GET(request: NextRequest) {
 </head>
 <body>
   <div class="container">
-    <div class="icon">${icon}</div>
     <h1>${message}</h1>
     <p>${description}</p>
     <a href="${next}" class="btn">${
